@@ -24,16 +24,6 @@ namespace TelemetryManager
 
             var statsdServer = new StatsdUDP(serverAddress, portNumber);
             _Connection = new Statsd(statsdServer);
-
-            //var dogstatsdConfig = new StatsdConfig
-            //{
-            //    StatsdServerName = serverAddress,
-            //    StatsdPort = portNumber,
-            //    Prefix = applicationName,
-            //    ConstantTags = constTags,
-            //};
-
-            //DogStatsd.Configure(dogstatsdConfig);
         }
 
         public void IncrementCounter(string eventName, int count)
@@ -41,7 +31,6 @@ namespace TelemetryManager
             if (string.IsNullOrWhiteSpace(eventName))
                 throw new ArgumentNullException("Event name cannot be null");
 
-            //DogStatsd.Increment(eventName, count);
             _Connection.Send<Statsd.Counting, int>(eventName, count);
         }
 
@@ -58,8 +47,7 @@ namespace TelemetryManager
             if (string.IsNullOrWhiteSpace(eventName))
                 throw new ArgumentNullException("Event name cannot be null");
 
-            //DogStatsd.Gauge(eventName, value);
-            _Connection.Send<Statsd.Gauge, double>("stat-name", 5.5);
+            _Connection.Send<Statsd.Gauge, double>(eventName, value);
         }
 
         /// <summary>
