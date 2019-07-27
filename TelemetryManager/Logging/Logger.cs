@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.IO;
 
 using log4net;
@@ -6,9 +6,10 @@ using log4net.Config;
 
 namespace TelemetryManager
 {
-    public class Logger : ILogger
+    public class Logger : ILogger, IDisposable
     {
-        private const string _Log4NetConfigFileName = "log.config";
+        private static readonly bool USE_EXTERNAL_LOG_CONFIG = true;
+        private const string LOG4NET_CONFIG_FILENAME = "log.config";
 
         private static object _Lock = new object();
         private static bool _Configured;
@@ -17,18 +18,21 @@ namespace TelemetryManager
         private string _ApplicationName;
         private string _Environment;
 
-        public bool IsDebugEnabled { get { return _Log.IsDebugEnabled; } }
-        public bool IsErrorEnabled { get { return _Log.IsErrorEnabled; } }
-        public bool IsFatalEnabled { get { return _Log.IsFatalEnabled; } }
-        public bool IsInfoEnabled { get { return _Log.IsInfoEnabled; } }
-        public bool IsWarnEnabled { get { return _Log.IsWarnEnabled; } }
+        public bool IsDebugEnabled => _Log.IsDebugEnabled;
+        public bool IsErrorEnabled => _Log.IsErrorEnabled;
+        public bool IsFatalEnabled => _Log.IsFatalEnabled;
+        public bool IsInfoEnabled => _Log.IsInfoEnabled;
+        public bool IsWarnEnabled => _Log.IsWarnEnabled;
 
         public Logger(Type type, string applicationName, string environment) : this(type.FullName, applicationName, environment) { }
 
         public Logger(string type, string applicationName, string environment)
         {
-            // We want to be able to create multiple loggers for local use, but we only need to set a 
-            // single watch on the configuration file name. Using singleton lock model to insure init.
+            if (string.IsNullOrWhiteSpace(applicationName))
+                throw new ArgumentNullException("Application name cannot be null or empty");
+
+            if (string.IsNullOrWhiteSpace(environment))
+                throw new ArgumentNullException("Environment cannot be null or empty");
 
             if (!_Configured)
             {
@@ -36,7 +40,11 @@ namespace TelemetryManager
                 {
                     if (!_Configured)
                     {
-                        XmlConfigurator.ConfigureAndWatch(new FileInfo(_Log4NetConfigFileName));
+                        if (USE_EXTERNAL_LOG_CONFIG)
+                            XmlConfigurator.ConfigureAndWatch(new FileInfo(LOG4NET_CONFIG_FILENAME));
+                        else
+                            XmlConfigurator.Configure();
+
                         _Configured = true;
                     }
                 }
@@ -47,6 +55,15 @@ namespace TelemetryManager
             // for the sake of consistency, we are using lower case names
             _ApplicationName = applicationName.ToLower();
             _Environment = environment.ToLower();
+        }
+
+        /// <summary>
+        /// This method exists to give .net a reason to include the loggly assembly in the 
+        /// telemetry manager output that is included in client applications.
+        /// </summary>
+        private void DummyCall()
+        {
+            new log4net.loggly.LogglyAppender();
         }
 
         /// <summary>
@@ -112,9 +129,23 @@ namespace TelemetryManager
                 LogMessage(new ErrorMessage(message, ex, _ApplicationName, _Environment), LoggingLevel.Fatal);
         }
 
-        public void Shutdown()
+        public void Dispose()
         {
-            _Log.Logger.Repository.Shutdown();
+            Dispose(true);
+        }
+
+        protected void Dispose(bool safeToFreeManagedObjects)
+        {
+            if (safeToFreeManagedObjects)
+            {
+                if (_Log != null)
+                    _Log.Logger.Repository.Shutdown();
+
+                _Log = null;
+                _ApplicationName = null;
+                _Environment = null;
+                _Lock = null;
+            }
         }
     }
 }

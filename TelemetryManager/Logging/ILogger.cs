@@ -2,7 +2,7 @@
 
 namespace TelemetryManager
 {
-    public interface ILogger
+    public interface ILogger : IDisposable
     {
         bool IsDebugEnabled { get; }
         bool IsErrorEnabled { get; }
@@ -15,7 +15,5 @@ namespace TelemetryManager
         void Warn(string message, Exception ex);
         void Error(string message, Exception ex);
         void Fatal(string message, Exception ex);
-
-        void Shutdown();
     }
 }

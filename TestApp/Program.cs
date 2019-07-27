@@ -42,6 +42,8 @@ namespace TestApp
                 Console.WriteLine("Press any key to exit...");
                 Console.ResetColor();
                 Console.ReadKey();
+
+                _Log.Dispose();
             }
         }
 

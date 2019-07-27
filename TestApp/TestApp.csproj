@@ -55,6 +55,7 @@
     <None Include="log.config">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\TelemetryManager\TelemetryManager.csproj">
