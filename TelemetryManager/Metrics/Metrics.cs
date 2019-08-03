@@ -3,7 +3,7 @@ using StatsdClient;
 
 namespace TelemetryManager
 {
-    public class Metrics : IMetrics, IDisposable
+    public class Metrics : IMetrics
     {
         private const int MIN_PORT = 1;
         private const int MAX_PORT = 65535;

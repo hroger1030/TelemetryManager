@@ -6,7 +6,7 @@ using log4net.Config;
 
 namespace TelemetryManager
 {
-    public class Logger : ILogger, IDisposable
+    public class Logger : ILogger
     {
         private static readonly bool USE_EXTERNAL_LOG_CONFIG = true;
         private const string LOG4NET_CONFIG_FILENAME = "log.config";
