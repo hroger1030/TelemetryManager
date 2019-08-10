@@ -9,9 +9,10 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>TelemetryManager</RootNamespace>
     <AssemblyName>TelemetryManager</AssemblyName>
-    <TargetFrameworkVersion>v4.7.1</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.6</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <Deterministic>true</Deterministic>
+    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -43,6 +44,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Logging\ILogger.cs" />
+    <Compile Include="Logging\DebugLogger.cs" />
     <Compile Include="Logging\LoggingLevel.cs" />
     <Compile Include="Logging\Messages\ErrorMessage.cs" />
     <Compile Include="Logging\Messages\LogBase.cs" />

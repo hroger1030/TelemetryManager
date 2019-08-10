@@ -74,23 +74,28 @@ namespace TelemetryManager
             switch (loggingLevel)
             {
                 case LoggingLevel.Debug:
-                    _Log.Debug(message);
+                    if (IsDebugEnabled)
+                        _Log.Debug(message);
                     break;
 
                 case LoggingLevel.Info:
-                    _Log.Info(message);
+                    if (IsInfoEnabled)
+                        _Log.Info(message);
                     break;
 
                 case LoggingLevel.Warn:
-                    _Log.Warn(message);
+                    if (IsWarnEnabled)
+                        _Log.Warn(message);
                     break;
 
                 case LoggingLevel.Error:
-                    _Log.Error(message);
+                    if (IsErrorEnabled)
+                        _Log.Error(message);
                     break;
 
                 case LoggingLevel.Fatal:
-                    _Log.Fatal(message);
+                    if (IsFatalEnabled)
+                        _Log.Fatal(message);
                     break;
 
                 default:
@@ -111,22 +116,34 @@ namespace TelemetryManager
                 LogMessage(new TextMessage(message, _ApplicationName, _Environment), LoggingLevel.Info);
         }
 
+        public void Warn(string message)
+        {
+            LogMessage(new TextMessage(message, _ApplicationName, _Environment), LoggingLevel.Warn);
+        }
+
         public void Warn(string message, Exception ex)
         {
-            if (_Log.IsWarnEnabled)
-                LogMessage(new ErrorMessage(message, ex, _ApplicationName, _Environment), LoggingLevel.Warn);
+            LogMessage(new ErrorMessage(message, ex, _ApplicationName, _Environment), LoggingLevel.Warn);
+        }
+
+        public void Error(string message)
+        {
+            LogMessage(new TextMessage(message, _ApplicationName, _Environment), LoggingLevel.Error);
         }
 
         public void Error(string message, Exception ex)
         {
-            if (_Log.IsErrorEnabled)
-                LogMessage(new ErrorMessage(message, ex, _ApplicationName, _Environment), LoggingLevel.Error);
+            LogMessage(new ErrorMessage(message, ex, _ApplicationName, _Environment), LoggingLevel.Error);
+        }
+
+        public void Fatal(string message)
+        {
+            LogMessage(new TextMessage(message, _ApplicationName, _Environment), LoggingLevel.Fatal);
         }
 
         public void Fatal(string message, Exception ex)
         {
-            if (_Log.IsFatalEnabled)
-                LogMessage(new ErrorMessage(message, ex, _ApplicationName, _Environment), LoggingLevel.Fatal);
+            LogMessage(new ErrorMessage(message, ex, _ApplicationName, _Environment), LoggingLevel.Fatal);
         }
 
         public void Dispose()
