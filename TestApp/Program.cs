@@ -53,6 +53,9 @@ namespace TestApp
             {
                 Exception ex = (Exception)e.ExceptionObject;
 
+                _Log.Fatal("Fatal application error occured", ex);
+                _Log.Dispose();
+
                 Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine($"Fatal error encountered '{ex.Message}', cannot continue");
                 Console.ResetColor();
