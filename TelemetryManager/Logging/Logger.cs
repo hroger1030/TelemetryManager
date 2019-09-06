@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Reflection;
 
 using log4net;
 using log4net.Config;
@@ -41,9 +42,23 @@ namespace TelemetryManager
                     if (!_Configured)
                     {
                         if (USE_EXTERNAL_LOG_CONFIG)
-                            XmlConfigurator.ConfigureAndWatch(new FileInfo(LOG4NET_CONFIG_FILENAME));
+                        {
+                            string path = LOG4NET_CONFIG_FILENAME;
+
+                            if (!File.Exists(path))
+                            {
+                                path = Assembly.GetExecutingAssembly().Location;
+
+                                if (!File.Exists(path))
+                                    throw new FileNotFoundException($"Unable to locate file '{LOG4NET_CONFIG_FILENAME}' in path '{path}'");
+                            }
+
+                            XmlConfigurator.ConfigureAndWatch(new FileInfo(path));
+                        }
                         else
+                        {
                             XmlConfigurator.Configure();
+                        }
 
                         _Configured = true;
                     }
@@ -55,15 +70,6 @@ namespace TelemetryManager
             // for the sake of consistency, we are using lower case names
             _ApplicationName = applicationName.ToLower();
             _Environment = environment.ToLower();
-        }
-
-        /// <summary>
-        /// This method exists to give .net a reason to include the loggly assembly in the 
-        /// telemetry manager output that is included in client applications.
-        /// </summary>
-        private void DummyCall()
-        {
-            new log4net.loggly.LogglyAppender();
         }
 
         /// <summary>

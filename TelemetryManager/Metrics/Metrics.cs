@@ -1,5 +1,5 @@
 ﻿using System;
-using StatsdClient;
+//using StatsdClient;
 
 namespace TelemetryManager
 {
@@ -10,7 +10,7 @@ namespace TelemetryManager
         private const string HOST_ADDRESS = "0.0.0.0";
         private const int HOST_PORT = 8125;
 
-        private Statsd _Connection;
+        //private Statsd _Connection;
         private string _ApplicationName;
         private string _Environment;
         private string _MetricPrefixCache;
@@ -31,8 +31,8 @@ namespace TelemetryManager
             if (string.IsNullOrWhiteSpace(environment))
                 throw new ArgumentNullException("Environment cannot be null or empty");
 
-            var statsdServer = new StatsdUDP(serverAddress, portNumber);
-            _Connection = new Statsd(statsdServer);
+            //var statsdServer = new StatsdUDP(serverAddress, portNumber);
+            //_Connection = new Statsd(statsdServer);
             _ApplicationName = applicationName.Replace(" ", string.Empty);
             _Environment = environment.Replace(" ", string.Empty);
         }
@@ -50,19 +50,19 @@ namespace TelemetryManager
         public void IncrementCounter(string eventName, int count)
         {
             var metricName = FormatMetricName(eventName);
-            _Connection.Send<Statsd.Counting, int>(metricName, count);
+            //_Connection.Send<Statsd.Counting, int>(metricName, count);
         }
 
         public void SetGauge(string eventName, double value)
         {
             var metricName = FormatMetricName(eventName);
-            _Connection.Send<Statsd.Gauge, double>(metricName, value);
+            //_Connection.Send<Statsd.Gauge, double>(metricName, value);
         }
 
         public void LogDuration(string eventName, double duration)
         {
             var metricName = FormatMetricName(eventName);
-            _Connection.Send<Statsd.Timing, double>(metricName, duration);
+            //_Connection.Send<Statsd.Timing, double>(metricName, duration);
         }
 
         public void LogDurationInMs(string eventName, TimeSpan duration)
@@ -85,7 +85,7 @@ namespace TelemetryManager
         public void LogDurationInMs(string eventName, Action method)
         {
             var metricName = FormatMetricName(eventName);
-            _Connection.Send(method, metricName);
+            //_Connection.Send(method, metricName);
         }
 
         private string FormatMetricName(string eventName)
@@ -111,7 +111,7 @@ namespace TelemetryManager
         {
             if (safeToFreeManagedObjects)
             {
-                _Connection = null;
+                //_Connection = null;
                 _ApplicationName = null;
                 _Environment = null;
                 _MetricPrefixCache = null;
