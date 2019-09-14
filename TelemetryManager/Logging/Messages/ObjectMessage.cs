@@ -1,10 +1,10 @@
 ﻿namespace TelemetryManager
 {
-    internal class ObjectMessage : TextMessage
+    public class ObjectMessage : TextMessage
     {
         public object Data { get; set; }
 
-        public ObjectMessage(string message, object data, string applicationName, string environmentName) : base(message, applicationName, environmentName)
+        public ObjectMessage(string message, object data) : base(message)
         {
             Data = data;
         }

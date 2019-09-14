@@ -13,7 +13,7 @@ namespace TelemetryManager
         /// This method exists to give .net a reason to include the loggly assembly in the 
         /// telemetry manager output that is included in client applications.
         /// </summary>
-        private void DummyCall()
+        public void DummyCall()
         {
             // todo: add refs to nuget packages that are only initialized at runtime as appenders.
             new log4net.loggly.LogglyAppender();

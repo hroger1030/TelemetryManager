@@ -1,6 +1,6 @@
 ﻿namespace TelemetryManager
 {
-    internal enum LoggingLevel
+    public enum LoggingLevel
     {
         Debug,
         Info,

@@ -13,13 +13,13 @@ namespace TestApp
 
         private static ILogger _Log;
 
-        public static void Main(string[] args)
+        public static void Main()
         {
             AppDomain.CurrentDomain.UnhandledException += Application_Error;
             var sw = Stopwatch.StartNew();
 
             // new up a logger instance..
-            _Log = new Logger(typeof(Program), ApplicationName, AppEnvironment);
+            _Log = new Log4NetLogger(typeof(Program), ApplicationName, AppEnvironment);
 
             try
             {

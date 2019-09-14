@@ -1,10 +1,10 @@
 ﻿namespace TelemetryManager
 {
-    internal class TextMessage : LogBase
+    public class TextMessage : LogBase
     {
         public string Message { get; set; }
 
-        public TextMessage(string message, string applicationName, string environmentName) : base(applicationName, environmentName)
+        public TextMessage(string message)
         {
             Message = message;
         }

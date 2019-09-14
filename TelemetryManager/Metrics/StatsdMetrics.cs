@@ -65,49 +65,49 @@ namespace TelemetryManager
             _IsDisposed = false;
         }
 
-        public void IncrementCounter(string metricName)
+        public void IncrementCounter(string metricName, string[] tags = null)
         {
-            IncrementCounter(metricName, 1);
+            IncrementCounter(metricName, 1, tags);
         }
 
-        public void DecrementCounter(string metricName)
+        public void DecrementCounter(string metricName, string[] tags = null)
         {
-            IncrementCounter(metricName, -1);
+            IncrementCounter(metricName, -1, tags);
         }
 
-        public void IncrementCounter(string metricName, int count)
+        public void IncrementCounter(string metricName, int count, string[] tags = null)
         {
-            SendMetric(MetricType.count, metricName, count.ToString());
+            SendMetric(MetricType.count, metricName, tags, count.ToString());
         }
 
         /// <summary>
         /// Sets a gauge to specified value
         /// </summary>
-        public void SetGauge(string metricName, double value)
+        public void SetGauge(string metricName, double value, string[] tags = null)
         {
-            SendMetric(MetricType.gague, metricName, value.ToString());
+            SendMetric(MetricType.gague, metricName, tags, value.ToString());
         }
 
         /// <summary>
         /// Logs a time to the server in a dimensionless format.
         /// </summary>
-        public void LogDuration(string metricName, double duration)
+        public void LogDuration(string metricName, double duration, string[] tags = null)
         {
-            SendMetric(MetricType.rate, metricName, duration.ToString());
+            SendMetric(MetricType.rate, metricName, tags, duration.ToString());
         }
 
         /// <summary>
         /// Logs a time to the server in millisecond format.
         /// </summary>
-        public void LogDurationInMs(string metricName, TimeSpan duration)
+        public void LogDurationInMs(string metricName, TimeSpan duration, string[] tags = null)
         {
-            SendMetric(MetricType.rate, metricName, duration.TotalMilliseconds.ToString());
+            SendMetric(MetricType.rate, metricName, tags, duration.TotalMilliseconds.ToString());
         }
 
         /// <summary>
         /// Logs a time to the server in millisecond format.
         /// </summary>
-        public void LogDurationInMs(string metricName, DateTime start, DateTime end)
+        public void LogDurationInMs(string metricName, DateTime start, DateTime end, string[] tags = null)
         {
             if (end < start)
             {
@@ -116,26 +116,35 @@ namespace TelemetryManager
                 start = buffer;
             }
 
-            SendMetric(MetricType.rate, metricName, (end - start).TotalMilliseconds.ToString());
+            SendMetric(MetricType.rate, metricName, tags, (end - start).TotalMilliseconds.ToString());
         }
 
         /// <summary>
         /// Times a method and logs the value.
         /// </summary>
-        public void LogDurationInMs(string metricName, Action method)
+        public void LogDurationInMs(string metricName, Action method, string[] tags = null)
         {
             var sw = Stopwatch.StartNew();
             method();
             sw.Stop();
 
-            SendMetric(MetricType.rate, metricName, sw.ElapsedMilliseconds.ToString());
+            SendMetric(MetricType.rate, metricName, tags, sw.ElapsedMilliseconds.ToString());
         }
 
-        private void SendMetric(MetricType metricType, string metricName, string value)
+        private void SendMetric(MetricType metricType, string metricName, string[] customTags, string value)
         {
             // Tags are used by datadog to allow metric aggregation across logical groups. (https://docs.datadoghq.com/tagging/)
             if (_MetricTagCache == null)
                 _MetricTagCache = new[] { $"env:{_Environment}", $"source:{_ApplicationName}" };
+
+
+            var tagsList = new List<string>();
+            tagsList.AddRange(_MetricTagCache);
+            if (customTags != null && customTags.Length > 0)
+            {
+                tagsList.AddRange(customTags);
+            }
+            var tags = tagsList.ToArray();
 
             var buffer = new MetricsPayload()
             {
@@ -145,7 +154,7 @@ namespace TelemetryManager
                     {
                         Host = Environment.MachineName,
                         MetricName = metricName,
-                        Tags = _MetricTagCache,
+                        Tags = tags,
                         MetricType = metricType.ToString(),
                         DataPoints = new string[][]
                         {

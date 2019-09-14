@@ -2,11 +2,11 @@
 
 namespace TelemetryManager
 {
-    internal class ErrorMessage : TextMessage
+    public class ErrorMessage : TextMessage
     {
         public Exception Exception { get; set; }
 
-        public ErrorMessage(string message, Exception ex, string applicationName, string environmentName) : base(message, applicationName, environmentName)
+        public ErrorMessage(string message, Exception ex) : base(message)
         {
             Exception = ex;
         }

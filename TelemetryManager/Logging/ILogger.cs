@@ -18,5 +18,11 @@ namespace TelemetryManager
         void Error(string message, Exception ex);
         void Fatal(string message);
         void Fatal(string message, Exception ex);
+
+        void Debug(LogBase message);
+        void Info(LogBase message);
+        void Warn(LogBase message);
+        void Error(LogBase message);
+        void Fatal(LogBase message);
     }
 }
