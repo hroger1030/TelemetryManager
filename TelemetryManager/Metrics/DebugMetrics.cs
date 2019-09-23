@@ -31,39 +31,64 @@ namespace TelemetryManager
             _IsDisposed = false;
         }
 
-        public void IncrementCounter(string eventName, string[] tags = null)
+        public void IncrementCounter(string eventName, string[] tags)
         {
             IncrementCounter(eventName, 1, tags);
         }
 
-        public void DecrementCounter(string eventName, string[] tags = null)
+        public void DecrementCounter(string eventName, string[] tags)
         {
             IncrementCounter(eventName, -1, tags);
         }
 
-        public void IncrementCounter(string eventName, int count, string[] tags = null)
+        public void IncrementCounter(string eventName, int count, string[] tags)
         {
-            Debug.WriteLine($"{_Environment} {_ApplicationName} {eventName} Counter Metric: {count}. Tags: {String.Join(", ", tags)}");
+            string fixedTags = string.Empty;
+
+            if (tags != null)
+                string.Join(", ", tags);
+
+            Debug.WriteLine($"{_Environment} {_ApplicationName} {eventName} Counter Metric: {count}. Tags: {fixedTags}");
         }
 
-        public void SetGauge(string eventName, double value, string[] tags = null)
+        public void SetGauge(string eventName, double value, string[] tags)
         {
-            Debug.WriteLine($"{_Environment} {_ApplicationName} {eventName} Gauge Metric: {value}. Tags: {String.Join(", ", tags)}");
+            string fixedTags = string.Empty;
+
+            if (tags != null)
+                string.Join(", ", tags);
+
+            Debug.WriteLine($"{_Environment} {_ApplicationName} {eventName} Gauge Metric: {value}. Tags: {fixedTags}");
         }
 
-        public void LogDuration(string eventName, double duration, string[] tags = null)
+        public void LogDuration(string eventName, double duration, string[] tags)
         {
-            Debug.WriteLine($"{_Environment} {_ApplicationName} {eventName} Counter Metric: {duration}. Tags: {String.Join(", ", tags)}");
+            string fixedTags = string.Empty;
+
+            if (tags != null)
+                string.Join(", ", tags);
+
+            Debug.WriteLine($"{_Environment} {_ApplicationName} {eventName} Counter Metric: {duration}. Tags: {fixedTags}");
         }
 
-        public void LogDurationInMs(string eventName, TimeSpan duration, string[] tags = null)
+        public void LogDurationInMs(string eventName, TimeSpan duration, string[] tags)
         {
-            Debug.WriteLine($"{_Environment} {_ApplicationName} {eventName} Duration Metric: {duration.TotalMilliseconds} ms. Tags: {String.Join(", ", tags)}");
+            string fixedTags = string.Empty;
+
+            if (tags != null)
+                string.Join(", ", tags);
+
+            Debug.WriteLine($"{_Environment} {_ApplicationName} {eventName} Duration Metric: {duration.TotalMilliseconds} ms. Tags: {string.Join(", ", tags)}");
         }
 
         public void LogDurationInMs(string eventName, DateTime start, DateTime end, string[] tags = null)
         {
-            Debug.WriteLine($"{_Environment} {_ApplicationName} {eventName} Duration Metric: {(end - start).TotalMilliseconds} ms. Tags: {String.Join(", ", tags)}");
+            string fixedTags = string.Empty;
+
+            if (tags != null)
+                string.Join(", ", tags);
+
+            Debug.WriteLine($"{_Environment} {_ApplicationName} {eventName} Duration Metric: {(end - start).TotalMilliseconds} ms. Tags: {string.Join(", ", tags)}");
         }
 
         public void LogDurationInMs(string eventName, Action method, string[] tags = null)
@@ -72,7 +97,12 @@ namespace TelemetryManager
             method();
             sw.Stop();
 
-            Debug.WriteLine($"{_Environment} {_ApplicationName} {eventName} Duration Metric: {sw.ElapsedMilliseconds} ms. Tags: {String.Join(", ", tags)}");
+            string fixedTags = string.Empty;
+
+            if (tags != null)
+                string.Join(", ", tags);
+
+            Debug.WriteLine($"{_Environment} {_ApplicationName} {eventName} Duration Metric: {sw.ElapsedMilliseconds} ms. Tags: {string.Join(", ", tags)}");
         }
 
         protected void Dispose(bool disposing)

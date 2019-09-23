@@ -137,13 +137,12 @@ namespace TelemetryManager
             if (_MetricTagCache == null)
                 _MetricTagCache = new[] { $"env:{_Environment}", $"source:{_ApplicationName}" };
 
-
             var tagsList = new List<string>();
             tagsList.AddRange(_MetricTagCache);
+
             if (customTags != null && customTags.Length > 0)
-            {
                 tagsList.AddRange(customTags);
-            }
+
             var tags = tagsList.ToArray();
 
             var buffer = new MetricsPayload()
