@@ -181,13 +181,19 @@ namespace TelemetryManager
 
         public void Warn(string message, Exception ex) => Warn(new ErrorMessage(message, ex));
 
+        public void Warn(Exception ex) => Warn(new ErrorMessage(ex.Message, ex));
+
         public void Error(string message) => Error(new TextMessage(message));
 
         public void Error(string message, Exception ex) => Error(new ErrorMessage(message, ex));
+        
+        public void Error(Exception ex) => Error(new ErrorMessage(ex.Message, ex));
 
         public void Fatal(string message) => Fatal(new TextMessage(message));
 
         public void Fatal(string message, Exception ex) => Fatal(new ErrorMessage(message, ex));
+
+        public void Fatal(Exception ex) => Fatal(new ErrorMessage(ex.Message, ex));
 
         //Generic logging:
         public void Debug(LogBase message) => LogMessage(message, LoggingLevel.Debug);
