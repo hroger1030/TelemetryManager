@@ -97,7 +97,7 @@ namespace TelemetryManager
                                     // we didn't find it. we can add additional checks
                                     // here, or just give up and abort the application.
 
-                                    throw new FileNotFoundException($"Failed to find loggly config file '{LOG4NET_CONFIG_FILENAME}' in '{fullPath}'");
+                                    throw new FileNotFoundException($"Failed to find log4net config file '{LOG4NET_CONFIG_FILENAME}' in '{fullPath}'");
                                 }
                             }
 
