@@ -59,78 +59,72 @@ namespace TelemetryManager
             _isDisposed = false;
         }
 
-        private void LogMessage(LogBase message)
+        private void LogMessage(object innerMessage, LoggingLevel loggingLevel)
         {
-            if (message == null)
-            {
+            if (innerMessage == null)
                 return;
-            }
 
-            message.ApplicationName = _ApplicationName;
-            message.Environment = _Environment;
+            var message = new
+            {
+                Message = innerMessage,
+                ApplicationName = _ApplicationName,
+                Environment = _Environment,
+                Level = loggingLevel,
+            };
+
             System.Diagnostics.Debug.WriteLine($"Debug message: {message}");
         }
 
-        public void Debug(string message) => Debug(new TextMessage(message));
+        public void Debug(string message) => Debug(new { Message = message });
 
-        public void Info(string message) => Info(new TextMessage(message));
+        public void Info(string message) => Info(new { Message = message });
 
-        public void Warn(string message) => Warn(new TextMessage(message));
+        public void Warn(string message) => Warn(new { Message = message });
 
-        public void Warn(string message, Exception ex) => Warn(new ErrorMessage(message, ex));
+        public void Warn(string message, Exception ex) => Warn(new { Message = message, Exception = ex });
 
-        public void Warn(Exception ex) => Warn(new ErrorMessage(ex.Message, ex));
+        public void Warn(Exception ex) => Warn(new { Exception = ex });
 
-        public void Error(string message) => Error(new TextMessage(message));
+        public void Error(string message) => Error(new { Message = message });
 
-        public void Error(string message, Exception ex) => Error(new ErrorMessage(message, ex));
+        public void Error(string message, Exception ex) => Error(new { Message = message, Exception = ex });
 
-        public void Error(Exception ex) => Error(new ErrorMessage(ex.Message, ex));
+        public void Error(Exception ex) => Error(new { Exception = ex });
 
-        public void Fatal(string message) => Fatal(new TextMessage(message));
+        public void Fatal(string message) => Fatal(new { Message = message });
 
-        public void Fatal(string message, Exception ex) => Fatal(new ErrorMessage(message, ex));
+        public void Fatal(string message, Exception ex) => Fatal(new { message, ex });
 
-        public void Fatal(Exception ex) => Fatal(new ErrorMessage(ex.Message, ex));
+        public void Fatal(Exception ex) => Fatal(new { Exception = ex });
 
-        public void Debug(LogBase message)
+        public void Debug(object message)
         {
             if (IsDebugEnabled)
-            {
-                LogMessage(message);
-            }
+                LogMessage(message, LoggingLevel.Debug);
         }
 
-        public void Info(LogBase message)
+        public void Info(object message)
         {
-            if (IsInfoEnabled)
-            {
-                LogMessage(message);
-            }
+            if (IsDebugEnabled)
+                LogMessage(message, LoggingLevel.Info);
         }
 
-        public void Warn(LogBase message)
+        public void Warn(object message)
         {
-            if (IsWarnEnabled)
-            {
-                LogMessage(message);
-            }
+            if (IsDebugEnabled)
+                LogMessage(message, LoggingLevel.Warn);
         }
 
-        public void Error(LogBase message)
+        public void Error(object message)
         {
-            if (IsErrorEnabled)
-            {
-                LogMessage(message);
-            }
+            if (IsDebugEnabled)
+                LogMessage(message, LoggingLevel.Error);
         }
 
-        public void Fatal(LogBase message)
+        public void Fatal(object message)
         {
-            if (IsFatalEnabled)
-            {
-                LogMessage(message);
-            }
+            if (IsDebugEnabled)
+                LogMessage(message, LoggingLevel.Fatal);
         }
 
         protected virtual void Dispose(bool disposing)

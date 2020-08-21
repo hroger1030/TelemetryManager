@@ -26,10 +26,10 @@ namespace TelemetryManager
         void Fatal(string message, Exception ex);
         void Fatal(Exception ex);
 
-        void Debug(LogBase message);
-        void Info(LogBase message);
-        void Warn(LogBase message);
-        void Error(LogBase message);
-        void Fatal(LogBase message);
+        void Debug(object message);
+        void Info(object message);
+        void Warn(object message);
+        void Error(object message);
+        void Fatal(object message);
     }
 }

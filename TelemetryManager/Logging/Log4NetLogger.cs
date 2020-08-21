@@ -130,15 +130,17 @@ namespace TelemetryManager
         /// <summary>
         /// Core method for logging. Insures that all logged messages meet the criteria defined by LogBase
         /// </summary>
-        private void LogMessage(LogBase message, LoggingLevel loggingLevel)
+        private void LogMessage(object innerMessage, LoggingLevel loggingLevel)
         {
-            if (message == null)
-            {
+            if (innerMessage == null)
                 return;
-            }
 
-            message.ApplicationName = _ApplicationName;
-            message.Environment = _Environment;
+            var message = new
+            {
+                Message = innerMessage,
+                ApplicationName = _ApplicationName,
+                Environment = _Environment,
+            };
 
             switch (loggingLevel)
             {
@@ -173,38 +175,38 @@ namespace TelemetryManager
             }
         }
 
-        public void Debug(string message) => Debug(new TextMessage(message));
+        public void Debug(string message) => Debug(new { Message = message });
 
-        public void Info(string message) => Info(new TextMessage(message));
+        public void Info(string message) => Info(new { Message = message });
 
-        public void Warn(string message) => Warn(new TextMessage(message));
+        public void Warn(string message) => Warn(new { Message = message });
 
-        public void Warn(string message, Exception ex) => Warn(new ErrorMessage(message, ex));
+        public void Warn(string message, Exception ex) => Warn(new { Message = message, Exception = ex });
 
-        public void Warn(Exception ex) => Warn(new ErrorMessage(ex.Message, ex));
+        public void Warn(Exception ex) => Warn(new { Exception = ex });
 
-        public void Error(string message) => Error(new TextMessage(message));
+        public void Error(string message) => Error(new { Message = message });
 
-        public void Error(string message, Exception ex) => Error(new ErrorMessage(message, ex));
-        
-        public void Error(Exception ex) => Error(new ErrorMessage(ex.Message, ex));
+        public void Error(string message, Exception ex) => Error(new { Message = message, Exception = ex });
 
-        public void Fatal(string message) => Fatal(new TextMessage(message));
+        public void Error(Exception ex) => Error(new { Exception = ex });
 
-        public void Fatal(string message, Exception ex) => Fatal(new ErrorMessage(message, ex));
+        public void Fatal(string message) => Fatal(new { Message = message });
 
-        public void Fatal(Exception ex) => Fatal(new ErrorMessage(ex.Message, ex));
+        public void Fatal(string message, Exception ex) => Fatal(new { Message = message, Exception = ex });
+
+        public void Fatal(Exception ex) => Fatal(new { Exception = ex });
 
         //Generic logging:
-        public void Debug(LogBase message) => LogMessage(message, LoggingLevel.Debug);
+        public void Debug(object message) => LogMessage(message, LoggingLevel.Debug);
 
-        public void Info(LogBase message) => LogMessage(message, LoggingLevel.Info);
+        public void Info(object message) => LogMessage(message, LoggingLevel.Info);
 
-        public void Warn(LogBase message) => LogMessage(message, LoggingLevel.Warn);
+        public void Warn(object message) => LogMessage(message, LoggingLevel.Warn);
 
-        public void Error(LogBase message) => LogMessage(message, LoggingLevel.Error);
+        public void Error(object message) => LogMessage(message, LoggingLevel.Error);
 
-        public void Fatal(LogBase message) => LogMessage(message, LoggingLevel.Fatal);
+        public void Fatal(object message) => LogMessage(message, LoggingLevel.Fatal);
 
         protected void Dispose(bool disposing)
         {
