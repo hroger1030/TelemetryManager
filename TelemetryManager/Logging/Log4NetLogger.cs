@@ -1,14 +1,12 @@
+using log4net;
+using log4net.Config;
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
 
-using log4net;
-using log4net.Config;
-
 namespace TelemetryManager
 {
-    public class Log4NetLogger : ILogger
+    public class Log4NetLogger : ILogger, IDisposable
     {
         private const string LOG4NET_CONFIG_FILENAME = "log.config";
 
@@ -27,17 +25,7 @@ namespace TelemetryManager
         public bool IsWarnEnabled => _Log.IsWarnEnabled;
 
         /// <summary>
-        /// CTOR for class that takes in a configuration collection
-        /// </summary>
-        public Log4NetLogger(Type type, IDictionary<string, string> config) : this(type.FullName, config[TelemetryConfig.APP_NAME], config[TelemetryConfig.ENVIRONMENT]) { }
-
-        /// <summary>
-        /// CTOR for class that takes in a configuration collection
-        /// </summary>
-        public Log4NetLogger(string type, IDictionary<string, string> config) : this(type, config[TelemetryConfig.APP_NAME], config[TelemetryConfig.ENVIRONMENT]) { }
-
-        /// <summary>
-        /// CTOR to init logger. This must be called before any logging can be done.
+        /// CTOR to initialize logger. This must be called before any logging can be done.
         /// </summary>
         /// <param name="type">The type of the class that the logging is being done in. Use typeof(<your_class>) to pass this parameter in.</param>
         /// <param name="applicationName">A string that denotes the name of the application that you are working in.</param>
@@ -47,7 +35,7 @@ namespace TelemetryManager
         public Log4NetLogger(Type type, string applicationName, string environment, bool UseConfigurationSettings = false) : this(type.FullName, applicationName, environment, UseConfigurationSettings) { }
 
         /// <summary>
-        /// CTOR to init logger. This must be called before any logging can be done.
+        /// CTOR to initialize logger. This must be called before any logging can be done.
         /// </summary>
         /// <param name="type">The string that describes the module that the logging is being done in. This is an alternative to passing in the logging class type</param>
         /// <param name="applicationName">A string that denotes the name of the application that you are working in.</param>
@@ -65,8 +53,8 @@ namespace TelemetryManager
                 throw new ArgumentNullException("Environment cannot be null or empty");
 
             // We want to be able to create multiple loggers for local use, but we only need to set a
-            // single watch on the configuration file name. Using singleton lock model to insure init.
-            // other class init steps can occur outside of singleton locks.
+            // single watch on the configuration file name. Using singleton lock model to insure initialize.
+            // other class initialize steps can occur outside of singleton locks.
 
             if (!_Configured)
             {
@@ -130,43 +118,41 @@ namespace TelemetryManager
         /// <summary>
         /// Core method for logging. Insures that all logged messages meet the criteria defined by LogBase
         /// </summary>
-        private void LogMessage(object innerMessage, LoggingLevel loggingLevel)
+        public void LogMessage(LoggingLevel loggingLevel, string message, Exception ex, object data)
         {
-            if (innerMessage == null)
-                return;
-
-            var message = new
+            var payload = new
             {
-                Message = innerMessage,
+                Message = message,
                 ApplicationName = _ApplicationName,
                 Environment = _Environment,
+                Data = data,
             };
 
             switch (loggingLevel)
             {
                 case LoggingLevel.Debug:
                     if (_Log.IsDebugEnabled)
-                        _Log.Debug(message);
+                        _Log.Debug(payload, ex);
                     break;
 
                 case LoggingLevel.Info:
                     if (_Log.IsInfoEnabled)
-                        _Log.Info(message);
+                        _Log.Info(payload, ex);
                     break;
 
                 case LoggingLevel.Warn:
                     if (_Log.IsWarnEnabled)
-                        _Log.Warn(message);
+                        _Log.Warn(payload, ex);
                     break;
 
                 case LoggingLevel.Error:
                     if (_Log.IsErrorEnabled)
-                        _Log.Error(message);
+                        _Log.Error(payload, ex);
                     break;
 
                 case LoggingLevel.Fatal:
                     if (_Log.IsFatalEnabled)
-                        _Log.Fatal(message);
+                        _Log.Fatal(payload, ex);
                     break;
 
                 default:
@@ -175,38 +161,20 @@ namespace TelemetryManager
             }
         }
 
-        public void Debug(string message) => Debug(new { Message = message });
+        public void Debug(string message) => Debug(message);
+        public void Debug(string message, Exception ex, object data) => Debug(message, ex, data);
 
-        public void Info(string message) => Info(new { Message = message });
+        public void Info(string message) => Info(message);
+        public void Info(string message, Exception ex, object data) => Info(message, ex, data);
 
-        public void Warn(string message) => Warn(new { Message = message });
+        public void Warn(string message) => Warn(message);
+        public void Warn(string message, Exception ex, object data) => Warn(message, ex, data);
 
-        public void Warn(string message, Exception ex) => Warn(new { Message = message, Exception = ex });
+        public void Error(string message) => Error(message);
+        public void Error(string message, Exception ex, object data) => Error(message, ex, data);
 
-        public void Warn(Exception ex) => Warn(new { Exception = ex });
-
-        public void Error(string message) => Error(new { Message = message });
-
-        public void Error(string message, Exception ex) => Error(new { Message = message, Exception = ex });
-
-        public void Error(Exception ex) => Error(new { Exception = ex });
-
-        public void Fatal(string message) => Fatal(new { Message = message });
-
-        public void Fatal(string message, Exception ex) => Fatal(new { Message = message, Exception = ex });
-
-        public void Fatal(Exception ex) => Fatal(new { Exception = ex });
-
-        //Generic logging:
-        public void Debug(object message) => LogMessage(message, LoggingLevel.Debug);
-
-        public void Info(object message) => LogMessage(message, LoggingLevel.Info);
-
-        public void Warn(object message) => LogMessage(message, LoggingLevel.Warn);
-
-        public void Error(object message) => LogMessage(message, LoggingLevel.Error);
-
-        public void Fatal(object message) => LogMessage(message, LoggingLevel.Fatal);
+        public void Fatal(string message) => Fatal(message);
+        public void Fatal(string message, Exception ex, object data) => Fatal(message, ex, data);
 
         protected void Dispose(bool disposing)
         {

@@ -11,25 +11,18 @@ namespace TelemetryManager
         bool IsWarnEnabled { get; }
 
         void Debug(string message);
+        void Debug(string message, Exception ex, object data);
 
         void Info(string message);
+        void Info(string message, Exception ex, object data);
 
         void Warn(string message);
-        void Warn(string message, Exception ex);
-        void Warn(Exception ex);
+        void Warn(string message, Exception ex, object data);
 
         void Error(string message);
-        void Error(string message, Exception ex);
-        void Error(Exception ex);
+        void Error(string message, Exception ex, object data);
 
         void Fatal(string message);
-        void Fatal(string message, Exception ex);
-        void Fatal(Exception ex);
-
-        void Debug(object message);
-        void Info(object message);
-        void Warn(object message);
-        void Error(object message);
-        void Fatal(object message);
+        void Fatal(string message, Exception ex, object data);
     }
 }

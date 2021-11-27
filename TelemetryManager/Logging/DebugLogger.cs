@@ -1,12 +1,11 @@
 using System;
-using System.Collections.Generic;
 
 namespace TelemetryManager
 {
     /// <summary>
     /// Debugger logger that will write all errors directly to debug console.
     /// </summary>
-    public class DebugLogger : ILogger
+    public class DebugLogger : ILogger, IDisposable
     {
         private readonly string _ApplicationName;
         private readonly string _Environment;
@@ -19,17 +18,7 @@ namespace TelemetryManager
         public bool IsWarnEnabled { get; set; }
 
         /// <summary>
-        /// CTOR for class that takes in a configuration collection
-        /// </summary>
-        public DebugLogger(Type type, IDictionary<string, string> config) : this(type.FullName, config[TelemetryConfig.APP_NAME], config[TelemetryConfig.ENVIRONMENT]) { }
-
-        /// <summary>
-        /// CTOR for class that takes in a configuration collection
-        /// </summary>
-        public DebugLogger(string type, IDictionary<string, string> config) : this(type, config[TelemetryConfig.APP_NAME], config[TelemetryConfig.ENVIRONMENT]) { }
-
-        /// <summary>
-        /// CTOR to init logger. This must be called before any logging can be done.
+        /// CTOR to initialize logger. This must be called before any logging can be done.
         /// </summary>
         /// <param name="type">The type of the class that the logging is being done in. Use typeof(<your_class>) to pass this parameter in.</param>
         /// <param name="applicationName">A string that denotes the name of the application that you are working in.</param>
@@ -37,7 +26,7 @@ namespace TelemetryManager
         public DebugLogger(Type type, string applicationName, string environment) : this(type.FullName, applicationName, environment) { }
 
         /// <summary>
-        /// CTOR to init logger. This must be called before any logging can be done.
+        /// CTOR to initialize logger. This must be called before any logging can be done.
         /// </summary>
         /// <param name="type">The string that describes the module that the logging is being done in. This is an alternative to passing in the logging class type</param>
         /// <param name="applicationName">A string that denotes the name of the application that you are working in.</param>
@@ -59,73 +48,63 @@ namespace TelemetryManager
             _isDisposed = false;
         }
 
-        private void LogMessage(object innerMessage, LoggingLevel loggingLevel)
+        public void LogMessage(LoggingLevel loggingLevel, string message, Exception ex, object data)
         {
-            if (innerMessage == null)
-                return;
-
-            var message = new
+            var payload = new
             {
-                Message = innerMessage,
+                Message = message,
                 ApplicationName = _ApplicationName,
                 Environment = _Environment,
-                Level = loggingLevel,
+                Data = data,
             };
 
-            System.Diagnostics.Debug.WriteLine($"Debug message: {message}");
+            switch (loggingLevel)
+            {
+                case LoggingLevel.Debug:
+                    if (IsDebugEnabled) 
+                        System.Diagnostics.Debug.WriteLine($"{loggingLevel}:{message} {ex} {payload}");
+                    break;
+
+                case LoggingLevel.Info:
+                    if (IsInfoEnabled) 
+                        System.Diagnostics.Debug.WriteLine($"{loggingLevel}:{message} {ex} {payload}");
+                    break;
+
+                case LoggingLevel.Warn:
+                    if (IsWarnEnabled) 
+                        System.Diagnostics.Debug.WriteLine($"{loggingLevel}:{message} {ex} {payload}");
+                    break;
+
+                case LoggingLevel.Error:
+                    if (IsErrorEnabled) 
+                        System.Diagnostics.Debug.WriteLine($"{loggingLevel}:{message} {ex} {payload}");
+                    break;
+
+                case LoggingLevel.Fatal:
+                    if (IsFatalEnabled) 
+                        System.Diagnostics.Debug.WriteLine($"{loggingLevel}:{message} {ex} {payload}");
+                    break;
+
+                default:
+                    System.Diagnostics.Debug.WriteLine($"Unknown logging level encountered: '{loggingLevel}' with  {payload}");
+                    break;
+            }
         }
 
-        public void Debug(string message) => Debug(new { Message = message });
+        public void Debug(string message) => LogMessage(LoggingLevel.Debug, message, null, null);
+        public void Debug(string message, Exception ex, object data) => LogMessage(LoggingLevel.Debug, message, null, null);
 
-        public void Info(string message) => Info(new { Message = message });
+        public void Info(string message) => LogMessage(LoggingLevel.Info, message, null, null);
+        public void Info(string message, Exception ex, object data) => LogMessage(LoggingLevel.Info, message, null, null);
 
-        public void Warn(string message) => Warn(new { Message = message });
+        public void Warn(string message) => LogMessage(LoggingLevel.Warn, message, null, null);
+        public void Warn(string message, Exception ex, object data) => LogMessage(LoggingLevel.Warn, message, null, null);
 
-        public void Warn(string message, Exception ex) => Warn(new { Message = message, Exception = ex });
+        public void Error(string message) => LogMessage(LoggingLevel.Error, message, null, null);
+        public void Error(string message, Exception ex, object data) => LogMessage(LoggingLevel.Error, message, null, null);
 
-        public void Warn(Exception ex) => Warn(new { Exception = ex });
-
-        public void Error(string message) => Error(new { Message = message });
-
-        public void Error(string message, Exception ex) => Error(new { Message = message, Exception = ex });
-
-        public void Error(Exception ex) => Error(new { Exception = ex });
-
-        public void Fatal(string message) => Fatal(new { Message = message });
-
-        public void Fatal(string message, Exception ex) => Fatal(new { message, ex });
-
-        public void Fatal(Exception ex) => Fatal(new { Exception = ex });
-
-        public void Debug(object message)
-        {
-            if (IsDebugEnabled)
-                LogMessage(message, LoggingLevel.Debug);
-        }
-
-        public void Info(object message)
-        {
-            if (IsDebugEnabled)
-                LogMessage(message, LoggingLevel.Info);
-        }
-
-        public void Warn(object message)
-        {
-            if (IsDebugEnabled)
-                LogMessage(message, LoggingLevel.Warn);
-        }
-
-        public void Error(object message)
-        {
-            if (IsDebugEnabled)
-                LogMessage(message, LoggingLevel.Error);
-        }
-
-        public void Fatal(object message)
-        {
-            if (IsDebugEnabled)
-                LogMessage(message, LoggingLevel.Fatal);
-        }
+        public void Fatal(string message) => LogMessage(LoggingLevel.Fatal, message, null, null);
+        public void Fatal(string message, Exception ex, object data) => LogMessage(LoggingLevel.Fatal, message, null, null);
 
         protected virtual void Dispose(bool disposing)
         {
@@ -133,7 +112,7 @@ namespace TelemetryManager
             {
                 if (disposing)
                 {
-                    // no managed resporces to dispose
+                    // no managed resources to dispose
                 }
 
                 _isDisposed = true;
