@@ -26,14 +26,14 @@ namespace TestApp
                 // Fire off a set of tests
                 _Log.Debug("Debug");
                 _Log.Info("Info");
-                _Log.Warn("Warning", null);
+                _Log.Warn("Warning");
 
                 throw new Exception("Sample Exception");
             }
             catch (Exception ex)
             {
-                _Log.Error("Test Error", ex);
-                _Log.Fatal("Test Fatal", ex);
+                _Log.Error("Test Error", ex, null);
+                _Log.Fatal("Test Fatal", ex, null);
             }
             finally
             {
@@ -53,7 +53,7 @@ namespace TestApp
             {
                 Exception ex = (Exception)e.ExceptionObject;
 
-                _Log.Fatal("Fatal application error occured", ex);
+                _Log.Fatal("Fatal application error occured", ex, null);
                 _Log.Dispose();
 
                 Console.ForegroundColor = ConsoleColor.Red;
