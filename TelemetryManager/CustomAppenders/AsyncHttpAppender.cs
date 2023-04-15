@@ -1,3 +1,6 @@
+using log4net.Appender;
+using log4net.Core;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Concurrent;
 using System.Diagnostics;
@@ -5,10 +8,6 @@ using System.Net.Http;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-
-using log4net.Appender;
-using log4net.Core;
-using Newtonsoft.Json;
 
 namespace TelemetryManager
 {
@@ -90,7 +89,7 @@ namespace TelemetryManager
                     }
                     else
                     {
-                        if (_Queue.Count < 1)
+                        if (_Queue.IsEmpty)
                         {
                             Debug.WriteLine($"Sleeping for {QUEUE_THREAD_SLEEP_DURATION_IN_MS} ms");
                             Thread.Sleep(QUEUE_THREAD_SLEEP_DURATION_IN_MS);
@@ -104,22 +103,20 @@ namespace TelemetryManager
             }
         }
 
-        private async Task Post(string url, object postData)
+        private static async Task Post(string url, object postData)
         {
             try
             {
-                using (var requestMessage = new HttpRequestMessage(HttpMethod.Post, url))
-                {
-                    string buffer = JsonConvert.SerializeObject(postData);
+                using var requestMessage = new HttpRequestMessage(HttpMethod.Post, url);
+                string buffer = JsonConvert.SerializeObject(postData);
 
-                    requestMessage.Content = new StringContent(buffer, Encoding.UTF8, "application/json");
-                    //requestMessage.Headers.Authorization = new AuthenticationHeaderValue("basic ", _ApiToken);
+                requestMessage.Content = new StringContent(buffer, Encoding.UTF8, "application/json");
+                //requestMessage.Headers.Authorization = new AuthenticationHeaderValue("basic ", _ApiToken);
 
-                    var response = await _HttpClient.SendAsync(requestMessage);
+                var response = await _HttpClient.SendAsync(requestMessage);
 
-                    if (!response.IsSuccessStatusCode)
-                        Debug.WriteLine($"Post request failure: {response.StatusCode} {response.RequestMessage}, Post: {buffer}");
-                }
+                if (!response.IsSuccessStatusCode)
+                    Debug.WriteLine($"Post request failure: {response.StatusCode} {response.RequestMessage}, Post: {buffer}");
             }
             catch (Exception ex)
             {

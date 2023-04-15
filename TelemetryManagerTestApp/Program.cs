@@ -12,6 +12,7 @@ namespace TestApp
         public static readonly string AppEnvironment = ConfigurationManager.AppSettings["Environment"];
 
         private static ILogger _Log;
+        private static IMetrics _Metrics;
 
         public static void Main()
         {
@@ -20,6 +21,7 @@ namespace TestApp
 
             // new up a logger instance..
             _Log = new Log4NetLogger(typeof(Program), ApplicationName, AppEnvironment);
+            _Metrics = new DebugMetrics(ApplicationName, AppEnvironment);
 
             try
             {
@@ -27,6 +29,9 @@ namespace TestApp
                 _Log.Debug("Debug");
                 _Log.Info("Info");
                 _Log.Warn("Warning");
+
+                for (int i = 0; i < 100; i++)
+                    _Metrics.IncrementCounter("Metric1");
 
                 throw new Exception("Sample Exception");
             }

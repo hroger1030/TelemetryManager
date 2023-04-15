@@ -1,18 +1,18 @@
 ﻿using System;
+using System.Threading.Tasks;
 
 namespace TelemetryManager
 {
-    public interface IMetrics : IDisposable
+    public interface IMetrics
     {
-        void IncrementCounter(string eventName, string[] tags = null);
-        void DecrementCounter(string eventName, string[] tags = null);
-        void IncrementCounter(string eventName, int count, string[] tags = null);
-
-        void LogDuration(string eventName, double duration, string[] tags = null);
-        void LogDurationInMs(string eventName, Action method, string[] tags = null);
-        void LogDurationInMs(string eventName, TimeSpan duration, string[] tags = null);
-        void LogDurationInMs(string eventName, DateTime start, DateTime end, string[] tags = null);
-
-        void SetGauge(string eventName, double value, string[] tags = null);
+        Task DecrementCounter(string metricName, string[] tags = null);
+        Task IncrementCounter(string metricName, string[] tags = null);
+        Task IncrementCounter(string metricName, int count, string[] tags = null);
+        Task LogDurationInMs(string metricName, double duration, string[] tags = null);
+        Task LogDurationInMs(string metricName, DateTime start, DateTime end, string[] tags = null);
+        Task LogDurationInMs(string metricName, TimeSpan duration, string[] tags = null);
+        Task LogMethodDurationInMs(string metricName, Action method, string[] tags = null);
+        Task<T> LogMethodDurationInMs<T>(string metricName, Func<T> method, string[] tags = null);
+        Task SetGauge(string metricName, double value, string[] tags = null);
     }
 }

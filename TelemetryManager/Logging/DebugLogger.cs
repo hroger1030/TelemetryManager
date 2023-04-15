@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace TelemetryManager
 {
@@ -10,6 +12,11 @@ namespace TelemetryManager
         private readonly string _ApplicationName;
         private readonly string _Environment;
         private bool _isDisposed;
+
+        /// <summary>
+        /// Property created to store any logged messages. Used by unit tests to view was was reported.
+        /// </summary>
+        public List<DebugLoggerLog> LoggedMessages { get; private set; } = new();
 
         public bool IsDebugEnabled { get; set; }
         public bool IsErrorEnabled { get; set; }
@@ -34,13 +41,13 @@ namespace TelemetryManager
         public DebugLogger(string type, string applicationName, string environment)
         {
             if (string.IsNullOrWhiteSpace(type))
-                throw new ArgumentNullException("Type cannot be null or empty");
+                throw new ArgumentNullException(nameof(type));
 
             if (string.IsNullOrWhiteSpace(applicationName))
-                throw new ArgumentNullException("Application name cannot be null or empty");
+                throw new ArgumentNullException(nameof(applicationName));
 
             if (string.IsNullOrWhiteSpace(environment))
-                throw new ArgumentNullException("Environment cannot be null or empty");
+                throw new ArgumentNullException(nameof(environment));
 
             // for the sake of consistency, we are using lower case names
             _ApplicationName = applicationName.ToLower();
@@ -48,71 +55,45 @@ namespace TelemetryManager
             _isDisposed = false;
         }
 
-        public void LogMessage(LoggingLevel loggingLevel, string message, Exception ex, object data)
+        public async Task LogMessage(LoggingLevel loggingLevel, string message, Exception ex, object data)
         {
-            var payload = new
+            var payload = new DebugLoggerLog()
             {
-                Message = message,
                 ApplicationName = _ApplicationName,
                 Environment = _Environment,
-                Data = data,
+                Error = ex,
+                Level = loggingLevel,
+                Message = data.ToString(),
             };
 
-            switch (loggingLevel)
-            {
-                case LoggingLevel.Debug:
-                    if (IsDebugEnabled) 
-                        System.Diagnostics.Debug.WriteLine($"{loggingLevel}:{message} {ex} {payload}");
-                    break;
+            LoggedMessages.Add(payload);
+            System.Diagnostics.Debug.WriteLine($"{loggingLevel}:{message} {ex} {payload}");
 
-                case LoggingLevel.Info:
-                    if (IsInfoEnabled) 
-                        System.Diagnostics.Debug.WriteLine($"{loggingLevel}:{message} {ex} {payload}");
-                    break;
-
-                case LoggingLevel.Warn:
-                    if (IsWarnEnabled) 
-                        System.Diagnostics.Debug.WriteLine($"{loggingLevel}:{message} {ex} {payload}");
-                    break;
-
-                case LoggingLevel.Error:
-                    if (IsErrorEnabled) 
-                        System.Diagnostics.Debug.WriteLine($"{loggingLevel}:{message} {ex} {payload}");
-                    break;
-
-                case LoggingLevel.Fatal:
-                    if (IsFatalEnabled) 
-                        System.Diagnostics.Debug.WriteLine($"{loggingLevel}:{message} {ex} {payload}");
-                    break;
-
-                default:
-                    System.Diagnostics.Debug.WriteLine($"Unknown logging level encountered: '{loggingLevel}' with  {payload}");
-                    break;
-            }
+            await Task.CompletedTask;
         }
 
-        public void Debug(string message) => LogMessage(LoggingLevel.Debug, message, null, null);
-        public void Debug(string message, Exception ex, object data) => LogMessage(LoggingLevel.Debug, message, null, null);
+        public async Task Debug(string message, Exception ex = null, object data = null)
+            => await LogMessage(LoggingLevel.Debug, message, ex, data);
 
-        public void Info(string message) => LogMessage(LoggingLevel.Info, message, null, null);
-        public void Info(string message, Exception ex, object data) => LogMessage(LoggingLevel.Info, message, null, null);
+        public async Task Info(string message, Exception ex = null, object data = null)
+            => await LogMessage(LoggingLevel.Info, message, ex, data);
 
-        public void Warn(string message) => LogMessage(LoggingLevel.Warn, message, null, null);
-        public void Warn(string message, Exception ex, object data) => LogMessage(LoggingLevel.Warn, message, null, null);
+        public async Task Warn(string message, Exception ex = null, object data = null)
+            => await LogMessage(LoggingLevel.Warn, message, ex, data);
 
-        public void Error(string message) => LogMessage(LoggingLevel.Error, message, null, null);
-        public void Error(string message, Exception ex, object data) => LogMessage(LoggingLevel.Error, message, null, null);
+        public async Task Error(string message, Exception ex = null, object data = null)
+            => await LogMessage(LoggingLevel.Error, message, ex, data);
 
-        public void Fatal(string message) => LogMessage(LoggingLevel.Fatal, message, null, null);
-        public void Fatal(string message, Exception ex, object data) => LogMessage(LoggingLevel.Fatal, message, null, null);
+        public async Task Fatal(string message, Exception ex = null, object data = null)
+            => await LogMessage(LoggingLevel.Fatal, message, ex, data);
 
-        protected virtual void Dispose(bool disposing)
+        private void Dispose(bool disposing)
         {
             if (!_isDisposed)
             {
                 if (disposing)
                 {
-                    // no managed resources to dispose
+                    LoggedMessages = null;
                 }
 
                 _isDisposed = true;
@@ -122,6 +103,16 @@ namespace TelemetryManager
         public void Dispose()
         {
             Dispose(true);
+            GC.SuppressFinalize(this);
         }
+    }
+
+    public class DebugLoggerLog
+    {
+        public LoggingLevel Level { get; set; }
+        public string Message { get; set; }
+        public object Error { get; set; }
+        public string ApplicationName { get; set; }
+        public string Environment { get; set; }
     }
 }

@@ -3,6 +3,7 @@ using log4net.Config;
 using System;
 using System.IO;
 using System.Reflection;
+using System.Threading.Tasks;
 
 namespace TelemetryManager
 {
@@ -10,7 +11,7 @@ namespace TelemetryManager
     {
         private const string LOG4NET_CONFIG_FILENAME = "log.config";
 
-        private static readonly object _Lock = new object();
+        private static readonly object _Lock = new();
         private static bool _Configured;
 
         private readonly ILog _Log;
@@ -44,13 +45,13 @@ namespace TelemetryManager
         public Log4NetLogger(string type, string applicationName, string environment, bool UseConfigurationSettings = false)
         {
             if (string.IsNullOrWhiteSpace(type))
-                throw new ArgumentNullException("Type cannot be null or empty");
+                throw new ArgumentNullException(nameof(type));
 
             if (string.IsNullOrWhiteSpace(applicationName))
-                throw new ArgumentNullException("Application name cannot be null or empty");
+                throw new ArgumentNullException(nameof(applicationName));
 
             if (string.IsNullOrWhiteSpace(environment))
-                throw new ArgumentNullException("Environment cannot be null or empty");
+                throw new ArgumentNullException(nameof(environment));
 
             // We want to be able to create multiple loggers for local use, but we only need to set a
             // single watch on the configuration file name. Using singleton lock model to insure initialize.
@@ -118,7 +119,7 @@ namespace TelemetryManager
         /// <summary>
         /// Core method for logging. Insures that all logged messages meet the criteria defined by LogBase
         /// </summary>
-        public void LogMessage(LoggingLevel loggingLevel, string message, Exception ex, object data)
+        public async Task LogMessage(LoggingLevel loggingLevel, string message, Exception ex, object data)
         {
             var payload = new
             {
@@ -157,26 +158,29 @@ namespace TelemetryManager
 
                 default:
                     // do nothing, logger should not ever throw;
+                    System.Diagnostics.Debug.WriteLine("Invalid logging level specified");
                     break;
             }
+
+            await Task.CompletedTask;
         }
 
-        public void Debug(string message) => Debug(message);
-        public void Debug(string message, Exception ex, object data) => Debug(message, ex, data);
+        public async Task Debug(string message, Exception exception = null, object data = null) =>
+            await LogMessage(LoggingLevel.Debug, message, exception, data);
 
-        public void Info(string message) => Info(message);
-        public void Info(string message, Exception ex, object data) => Info(message, ex, data);
+        public async Task Info(string message, Exception exception = null, object data = null) =>
+            await LogMessage(LoggingLevel.Info, message, exception, data);
 
-        public void Warn(string message) => Warn(message);
-        public void Warn(string message, Exception ex, object data) => Warn(message, ex, data);
+        public async Task Warn(string message, Exception exception = null, object data = null) =>
+            await LogMessage(LoggingLevel.Warn, message, exception, data);
 
-        public void Error(string message) => Error(message);
-        public void Error(string message, Exception ex, object data) => Error(message, ex, data);
+        public async Task Error(string message, Exception exception = null, object data = null) =>
+            await LogMessage(LoggingLevel.Error, message, exception, data);
 
-        public void Fatal(string message) => Fatal(message);
-        public void Fatal(string message, Exception ex, object data) => Fatal(message, ex, data);
+        public async Task Fatal(string message, Exception exception = null, object data = null)
+            => await LogMessage(LoggingLevel.Fatal, message, exception, data);
 
-        protected void Dispose(bool disposing)
+        private void Dispose(bool disposing)
         {
             if (!_isDisposed)
             {
@@ -193,6 +197,7 @@ namespace TelemetryManager
         public void Dispose()
         {
             Dispose(true);
+            GC.SuppressFinalize(this);
         }
     }
 }

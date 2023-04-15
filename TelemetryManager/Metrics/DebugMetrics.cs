@@ -1,117 +1,148 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Threading.Tasks;
 
 namespace TelemetryManager
 {
     /// <summary>
     /// Sends metrics to debug console.
     /// </summary>
-    public class DebugMetrics : IMetrics
+    public class DebugMetrics : IMetrics, IDisposable
     {
-        private string _ApplicationName;
-        private string _Environment;
+        private readonly string[] _MetricTagCache;
+        private readonly string _ApplicationName;
+        private readonly string _Environment;
         private bool _IsDisposed;
 
-        /// <summary>
-        /// CTOR for class that takes in a configuration collection
-        /// </summary>
-        public DebugMetrics(IDictionary<string, string> config) : this(config[TelemetryConfig.APP_NAME], config[TelemetryConfig.ENVIRONMENT]) { }
+        public List<MetricData> RecordedMetrics { get; private set; } = new();
 
         public DebugMetrics(string applicationName, string environment)
         {
             if (string.IsNullOrWhiteSpace(applicationName))
-                throw new ArgumentNullException("Application name cannot be null or empty");
+                throw new ArgumentNullException(nameof(applicationName));
 
             if (string.IsNullOrWhiteSpace(environment))
-                throw new ArgumentNullException("Environment cannot be null or empty");
+                throw new ArgumentNullException(nameof(environment));
 
             _ApplicationName = applicationName.Replace(" ", string.Empty);
             _Environment = environment.Replace(" ", string.Empty);
+            _MetricTagCache = new[] { $"env:{_Environment}", $"source:{_ApplicationName}" };
             _IsDisposed = false;
         }
 
-        public void IncrementCounter(string eventName, string[] tags)
+        public async Task IncrementCounter(string eventName, string[] tags)
         {
-            IncrementCounter(eventName, 1, tags);
+            await IncrementCounter(eventName, 1, tags);
         }
 
-        public void DecrementCounter(string eventName, string[] tags)
+        public async Task DecrementCounter(string eventName, string[] tags)
         {
-            IncrementCounter(eventName, -1, tags);
+            await IncrementCounter(eventName, -1, tags);
         }
 
-        public void IncrementCounter(string eventName, int count, string[] tags)
+        public async Task IncrementCounter(string metricName, int count, string[] tags = null)
         {
-            string fixedTags = string.Empty;
-
-            if (tags != null)
-                string.Join(", ", tags);
-
-            Debug.WriteLine($"{_Environment} {_ApplicationName} {eventName} Counter Metric: {count}. Tags: {fixedTags}");
+            await Write(MetricType.count, metricName, tags, DateTime.UtcNow, count.ToString());
         }
 
-        public void SetGauge(string eventName, double value, string[] tags)
+        public async Task SetGauge(string metricName, double value, string[] tags = null)
         {
-            string fixedTags = string.Empty;
-
-            if (tags != null)
-                string.Join(", ", tags);
-
-            Debug.WriteLine($"{_Environment} {_ApplicationName} {eventName} Gauge Metric: {value}. Tags: {fixedTags}");
+            await Write(MetricType.gauge, metricName, tags, DateTime.UtcNow, value.ToString());
         }
 
-        public void LogDuration(string eventName, double duration, string[] tags)
+        public async Task LogDurationInMs(string metricName, double durationInMs, string[] tags = null)
         {
-            string fixedTags = string.Empty;
-
-            if (tags != null)
-                string.Join(", ", tags);
-
-            Debug.WriteLine($"{_Environment} {_ApplicationName} {eventName} Counter Metric: {duration}. Tags: {fixedTags}");
+            await Write(MetricType.rate, metricName, tags, DateTime.UtcNow, durationInMs.ToString());
         }
 
-        public void LogDurationInMs(string eventName, TimeSpan duration, string[] tags)
+        public async Task LogDurationInMs(string metricName, TimeSpan duration, string[] tags = null)
         {
-            string fixedTags = string.Empty;
-
-            if (tags != null)
-                string.Join(", ", tags);
-
-            Debug.WriteLine($"{_Environment} {_ApplicationName} {eventName} Duration Metric: {duration.TotalMilliseconds} ms. Tags: {string.Join(", ", tags)}");
+            await Write(MetricType.rate, metricName, tags, DateTime.UtcNow, duration.TotalMilliseconds.ToString());
         }
 
-        public void LogDurationInMs(string eventName, DateTime start, DateTime end, string[] tags = null)
+        public async Task LogDurationInMs(string metricName, DateTime start, DateTime end, string[] tags = null)
         {
-            string fixedTags = string.Empty;
+            if (end < start)
+                (start, end) = (end, start);
 
-            if (tags != null)
-                string.Join(", ", tags);
-
-            Debug.WriteLine($"{_Environment} {_ApplicationName} {eventName} Duration Metric: {(end - start).TotalMilliseconds} ms. Tags: {string.Join(", ", tags)}");
+            await Write(MetricType.rate, metricName, tags, DateTime.UtcNow, (end - start).TotalMilliseconds.ToString());
         }
 
-        public void LogDurationInMs(string eventName, Action method, string[] tags = null)
+        public async Task LogMethodDurationInMs(string metricName, Action method, string[] tags = null)
         {
-            var sw = Stopwatch.StartNew();
-            method();
-            sw.Stop();
+            var timer = Stopwatch.StartNew();
 
-            string fixedTags = string.Empty;
-
-            if (tags != null)
-                string.Join(", ", tags);
-
-            Debug.WriteLine($"{_Environment} {_ApplicationName} {eventName} Duration Metric: {sw.ElapsedMilliseconds} ms. Tags: {string.Join(", ", tags)}");
+            try
+            {
+                method();
+            }
+            finally
+            {
+                timer.Stop();
+                await Write(MetricType.rate, metricName, tags, DateTime.UtcNow, timer.ElapsedMilliseconds.ToString());
+            }
         }
 
-        protected void Dispose(bool disposing)
+        public async Task<T> LogMethodDurationInMs<T>(string metricName, Func<T> method, string[] tags = null)
+        {
+            var timer = Stopwatch.StartNew();
+
+            try
+            {
+                return method();
+            }
+            finally
+            {
+                timer.Stop();
+                await Write(MetricType.rate, metricName, tags, DateTime.UtcNow, timer.ElapsedMilliseconds.ToString());
+            }
+        }
+
+        private async Task Write(MetricType metricType, string metricName, string[] customTags, DateTime eventDate, string value)
+        {
+            if (string.IsNullOrWhiteSpace(metricName))
+                throw new ArgumentNullException(nameof(metricName));
+
+            if (string.IsNullOrWhiteSpace(value))
+                throw new ArgumentNullException(nameof(value));
+
+            var tagsList = new List<string>(_MetricTagCache);
+
+            if (customTags != null && customTags.Length > 0)
+                tagsList.AddRange(customTags);
+
+            var formattedTags = tagsList.ToArray();
+
+            var metric = new MetricData()
+            {
+                MachineName = Environment.MachineName,
+                MetricName = metricName,
+                FormattedTags = formattedTags,
+                MetricType = metricType.ToString(),
+                DataPoints = new string[][]
+                {
+                    new string[]
+                    {
+                        new DateTimeOffset(eventDate).ToUnixTimeSeconds().ToString(),
+                        value
+                    }
+                }
+            };
+
+            RecordedMetrics.Add(metric);
+            Debug.WriteLine($"(DebugMetricWriter): {metric}");
+
+            await Task.CompletedTask;
+        }
+
+        private void Dispose(bool disposing)
         {
             if (!_IsDisposed)
             {
                 if (disposing)
                 {
-                    // dispose managed objects
+                    RecordedMetrics = null;
                 }
 
                 _IsDisposed = true;
@@ -121,6 +152,16 @@ namespace TelemetryManager
         public void Dispose()
         {
             Dispose(true);
+            GC.SuppressFinalize(this);
         }
+    }
+
+    public class MetricData
+    {
+        public string MachineName { get; set; }
+        public string MetricName { get; set; }
+        public string[] FormattedTags { get; set; }
+        public string MetricType { get; set; }
+        public string[][] DataPoints { get; set; }
     }
 }
