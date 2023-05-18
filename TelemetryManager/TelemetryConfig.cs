@@ -15,9 +15,7 @@ namespace TelemetryManager
         /// </summary>
         public void DummyCall()
         {
-            // todo: add refs to nuget packages that are only initialized at runtime as appenders.
             new log4net.loggly.LogglyAppender();
-
             throw new Exception("Do not ever call DummyCall(), it exists for build purposes only");
         }
     }

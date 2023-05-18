@@ -1,6 +1,11 @@
+using log4net.Appender;
+using log4net.loggly;
+using log4net.Repository.Hierarchy;
+using log4net;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using log4net.Core;
 
 namespace TelemetryManager
 {
@@ -18,11 +23,11 @@ namespace TelemetryManager
         /// </summary>
         public List<DebugLoggerLog> LoggedMessages { get; private set; } = new();
 
-        public bool IsDebugEnabled { get; set; }
-        public bool IsErrorEnabled { get; set; }
-        public bool IsFatalEnabled { get; set; }
-        public bool IsInfoEnabled { get; set; }
-        public bool IsWarnEnabled { get; set; }
+        public bool IsDebugEnabled { get; set; } = true;
+        public bool IsErrorEnabled { get; set; } = true;
+        public bool IsFatalEnabled { get; set; } = true;
+        public bool IsInfoEnabled { get; set; } = true;
+        public bool IsWarnEnabled { get; set; } = true;
 
         /// <summary>
         /// CTOR to initialize logger. This must be called before any logging can be done.
@@ -86,6 +91,57 @@ namespace TelemetryManager
 
         public async Task Fatal(string message, Exception ex = null, object data = null)
             => await LogMessage(LoggingLevel.Fatal, message, ex, data);
+
+        public async Task SetGlobalLoggingLevel(LoggingLevel newLevel)
+        {
+            switch (newLevel)
+            {
+                case LoggingLevel.Debug:
+                    IsDebugEnabled = true;
+                    IsInfoEnabled = true;
+                    IsWarnEnabled = true;
+                    IsErrorEnabled = true;
+                    IsFatalEnabled = true;
+                    break;
+
+                case LoggingLevel.Info:
+                    IsDebugEnabled = false;
+                    IsInfoEnabled = true;
+                    IsWarnEnabled = true;
+                    IsErrorEnabled = true;
+                    IsFatalEnabled = true;
+                    break;
+
+                case LoggingLevel.Warn:
+                    IsDebugEnabled = false;
+                    IsInfoEnabled = false;
+                    IsWarnEnabled = true;
+                    IsErrorEnabled = true;
+                    IsFatalEnabled = true;
+                    break;
+
+                case LoggingLevel.Error:
+                    IsDebugEnabled = false;
+                    IsInfoEnabled = false;
+                    IsWarnEnabled = false;
+                    IsErrorEnabled = true;
+                    IsFatalEnabled = true;
+                    break;
+
+                case LoggingLevel.Fatal:
+                    IsDebugEnabled = false;
+                    IsInfoEnabled = false;
+                    IsWarnEnabled = false;
+                    IsErrorEnabled = false;
+                    IsFatalEnabled = true;
+                    break;
+
+                default:
+                    throw new ArgumentOutOfRangeException($"LoggingLevel set to unknown value of '{newLevel}'");
+            }
+
+            await Task.CompletedTask;
+        }
 
         private void Dispose(bool disposing)
         {

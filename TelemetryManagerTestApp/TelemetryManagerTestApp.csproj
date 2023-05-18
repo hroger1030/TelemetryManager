@@ -3,6 +3,7 @@
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
     <OutputType>Exe</OutputType>
+	<LangVersion>latest</LangVersion>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
@@ -16,6 +17,12 @@
 
   <ItemGroup>
     <ProjectReference Include="..\TelemetryManager\TelemetryManager.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="log.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 </Project>

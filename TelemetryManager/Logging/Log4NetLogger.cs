@@ -1,5 +1,9 @@
 using log4net;
+using log4net.Appender;
 using log4net.Config;
+using log4net.Core;
+using log4net.loggly;
+using log4net.Repository.Hierarchy;
 using System;
 using System.IO;
 using System.Reflection;
@@ -103,12 +107,12 @@ namespace TelemetryManager
                 }
             }
 
-            _isDisposed = false;
-            _Log = LogManager.GetLogger(Assembly.GetCallingAssembly(), type);
-
             // for the sake of consistency, we are using lower case names
             _ApplicationName = applicationName.ToLower();
             _Environment = environment.ToLower();
+
+            _isDisposed = false;
+            _Log = LogManager.GetLogger(Assembly.GetCallingAssembly(), type.ToLower());
 
             // check to make sure that loggers were properly loaded. If all of the output
             // levels are false, we probably failed to find and load a config file.
@@ -179,6 +183,85 @@ namespace TelemetryManager
 
         public async Task Fatal(string message, Exception exception = null, object data = null)
             => await LogMessage(LoggingLevel.Fatal, message, exception, data);
+
+        public async Task SetGlobalLoggingLevel(LoggingLevel newLevel)
+        {
+            var logger = (Logger)_Log.Logger;
+
+            switch (newLevel)
+            {
+                case LoggingLevel.Debug:
+                    logger.Level = Level.Debug;
+                    break;
+
+                case LoggingLevel.Info:
+                    logger.Level = Level.Info;
+                    break;
+
+                case LoggingLevel.Warn:
+                    logger.Level = Level.Warn;
+                    break;
+
+                case LoggingLevel.Error:
+                    logger.Level = Level.Error;
+                    break;
+
+                case LoggingLevel.Fatal:
+                    logger.Level = Level.Fatal;
+                    break;
+
+                default:
+                    throw new ArgumentOutOfRangeException($"LoggingLevel set to unknown value of '{newLevel}'");
+            }
+
+            await Task.CompletedTask;
+        }
+
+        /// <summary>
+        /// Not included as part of Ilogger interface, concept of appenders might not 
+        /// make sense in all implementations. Also, some appenders cannot be enabled
+        /// programatically. (ManagedColoredConsoleAppender)
+        /// </summary>
+        public async Task EnableAppender(Appender appenderType)
+        {
+            Logger _logger = (Logger)_Log.Logger;
+
+            switch (appenderType)
+            {
+                case Appender.FileAppender:
+                    _logger.AddAppender(new FileAppender());
+                    break;
+
+                case Appender.ManagedColoredConsoleAppender:
+                    _logger.AddAppender(new ManagedColoredConsoleAppender());
+                    break;
+
+                case Appender.LogglyAppender:
+                    _logger.AddAppender(new LogglyAppender());
+                    break;
+
+                case Appender.ConsoleAppender:
+                    _logger.AddAppender(new ConsoleAppender());
+                    break;
+
+                default:
+                    throw new ArgumentOutOfRangeException($"Appender set to unknown value of '{appenderType}'");
+            }
+
+            await Task.CompletedTask;
+        }
+
+        /// <summary>
+        /// Not included as part of Ilogger interface, concept of appenders might not 
+        /// make sense in all implementations. Also, some appenders cannot be enabled
+        /// programatically. (ManagedColoredConsoleAppender)
+        /// </summary>
+        public async Task DisableAppender(Appender appenderType)
+        {
+            Logger _logger = (Logger)_Log.Logger;
+            _logger.RemoveAppender(appenderType.ToString());
+            await Task.CompletedTask;
+        }
 
         private void Dispose(bool disposing)
         {

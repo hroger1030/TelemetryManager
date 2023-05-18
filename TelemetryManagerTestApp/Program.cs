@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Configuration;
 using System.Diagnostics;
-
+using System.Threading.Tasks;
 using TelemetryManager;
 
 namespace TestApp
@@ -14,7 +14,7 @@ namespace TestApp
         private static ILogger _Log;
         private static IMetrics _Metrics;
 
-        public static void Main()
+        public static async Task Main()
         {
             AppDomain.CurrentDomain.UnhandledException += Application_Error;
             var sw = Stopwatch.StartNew();
@@ -26,19 +26,19 @@ namespace TestApp
             try
             {
                 // Fire off a set of tests
-                _Log.Debug("Debug");
-                _Log.Info("Info");
-                _Log.Warn("Warning");
+                await _Log.Debug("Debug");
+                await _Log.Info("Info");
+                await _Log.Warn("Warning");
 
                 for (int i = 0; i < 100; i++)
-                    _Metrics.IncrementCounter("Metric1");
+                    await _Metrics.IncrementCounter("Metric1");
 
                 throw new Exception("Sample Exception");
             }
             catch (Exception ex)
             {
-                _Log.Error("Test Error", ex, null);
-                _Log.Fatal("Test Fatal", ex, null);
+                await _Log.Error("Test Error", ex, null);
+                await _Log.Fatal("Test Fatal", ex, null);
             }
             finally
             {
