@@ -17,6 +17,6 @@ namespace TelemetryManager
         Task Error(string message, Exception ex = null, object data = null);
         Task Fatal(string message, Exception ex = null, object data = null);
 
-        Task SetGlobalLoggingLevel(LoggingLevel newLevel);
+        Task SetLocalLoggingLevel(LoggingLevel newLevel);
     }
 }

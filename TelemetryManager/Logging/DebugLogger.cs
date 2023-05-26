@@ -92,7 +92,7 @@ namespace TelemetryManager
         public async Task Fatal(string message, Exception ex = null, object data = null)
             => await LogMessage(LoggingLevel.Fatal, message, ex, data);
 
-        public async Task SetGlobalLoggingLevel(LoggingLevel newLevel)
+        public async Task SetLocalLoggingLevel(LoggingLevel newLevel)
         {
             switch (newLevel)
             {
