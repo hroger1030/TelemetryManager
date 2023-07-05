@@ -20,7 +20,7 @@
 
   <ItemGroup>
     <None Update="log.config">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </None>
   </ItemGroup>
 
