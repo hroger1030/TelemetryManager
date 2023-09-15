@@ -1,11 +1,6 @@
-using log4net.Appender;
-using log4net.loggly;
-using log4net.Repository.Hierarchy;
-using log4net;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using log4net.Core;
 
 namespace TelemetryManager
 {
