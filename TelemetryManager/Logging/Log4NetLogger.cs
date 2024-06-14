@@ -120,10 +120,8 @@ namespace TelemetryManager
                 throw new Exception("None of the debug levels are enabled, you probably need to check that the logger configuration has been properly loaded");
         }
 
-        /// <summary>
-        /// Core method for logging. Insures that all logged messages meet the criteria defined by LogBase
-        /// </summary>
-        public async Task LogMessage(LoggingLevel loggingLevel, string message, Exception ex, object data)
+
+        public void LogMessage(LoggingLevel loggingLevel, string message, Exception ex, object data)
         {
             var payload = new
             {
@@ -165,56 +163,36 @@ namespace TelemetryManager
                     System.Diagnostics.Debug.WriteLine("Invalid logging level specified");
                     break;
             }
-
-            await Task.CompletedTask;
         }
 
-        public async Task Debug(string message, Exception exception = null, object data = null) =>
-            await LogMessage(LoggingLevel.Debug, message, exception, data);
+        public void Debug(string message, Exception exception = null, object data = null) =>
+            LogMessage(LoggingLevel.Debug, message, exception, data);
 
-        public async Task Info(string message, Exception exception = null, object data = null) =>
-            await LogMessage(LoggingLevel.Info, message, exception, data);
+        public void Info(string message, Exception exception = null, object data = null) =>
+            LogMessage(LoggingLevel.Info, message, exception, data);
 
-        public async Task Warn(string message, Exception exception = null, object data = null) =>
-            await LogMessage(LoggingLevel.Warn, message, exception, data);
+        public void Warn(string message, Exception exception = null, object data = null) =>
+            LogMessage(LoggingLevel.Warn, message, exception, data);
 
-        public async Task Error(string message, Exception exception = null, object data = null) =>
-            await LogMessage(LoggingLevel.Error, message, exception, data);
+        public void Error(string message, Exception exception = null, object data = null) =>
+            LogMessage(LoggingLevel.Error, message, exception, data);
 
-        public async Task Fatal(string message, Exception exception = null, object data = null)
-            => await LogMessage(LoggingLevel.Fatal, message, exception, data);
+        public void Fatal(string message, Exception exception = null, object data = null) =>
+            LogMessage(LoggingLevel.Fatal, message, exception, data);
 
-        public async Task SetLocalLoggingLevel(LoggingLevel newLevel)
+        public void SetLocalLoggingLevel(LoggingLevel newLevel)
         {
             var logger = (Logger)_Log.Logger;
 
-            switch (newLevel)
+            logger.Level = newLevel switch
             {
-                case LoggingLevel.Debug:
-                    logger.Level = Level.Debug;
-                    break;
-
-                case LoggingLevel.Info:
-                    logger.Level = Level.Info;
-                    break;
-
-                case LoggingLevel.Warn:
-                    logger.Level = Level.Warn;
-                    break;
-
-                case LoggingLevel.Error:
-                    logger.Level = Level.Error;
-                    break;
-
-                case LoggingLevel.Fatal:
-                    logger.Level = Level.Fatal;
-                    break;
-
-                default:
-                    throw new ArgumentOutOfRangeException($"LoggingLevel set to unknown value of '{newLevel}'");
-            }
-
-            await Task.CompletedTask;
+                LoggingLevel.Debug => Level.Debug,
+                LoggingLevel.Info => Level.Info,
+                LoggingLevel.Warn => Level.Warn,
+                LoggingLevel.Error => Level.Error,
+                LoggingLevel.Fatal => Level.Fatal,
+                _ => throw new ArgumentOutOfRangeException($"LoggingLevel set to unknown value of '{newLevel}'"),
+            };
         }
 
         /// <summary>
@@ -222,33 +200,31 @@ namespace TelemetryManager
         /// make sense in all implementations. Also, some appenders cannot be enabled
         /// programatically. (ManagedColoredConsoleAppender)
         /// </summary>
-        public async Task EnableAppender(Appender appenderType)
+        public void EnableAppender(Appender appenderType)
         {
-            Logger _logger = (Logger)_Log.Logger;
+            var logger = (Logger)_Log.Logger;
 
             switch (appenderType)
             {
                 case Appender.FileAppender:
-                    _logger.AddAppender(new FileAppender());
+                    logger.AddAppender(new FileAppender());
                     break;
 
                 case Appender.ManagedColoredConsoleAppender:
-                    _logger.AddAppender(new ManagedColoredConsoleAppender());
+                    logger.AddAppender(new ManagedColoredConsoleAppender());
                     break;
 
                 case Appender.LogglyAppender:
-                    _logger.AddAppender(new LogglyAppender());
+                    logger.AddAppender(new LogglyAppender());
                     break;
 
                 case Appender.ConsoleAppender:
-                    _logger.AddAppender(new ConsoleAppender());
+                    logger.AddAppender(new ConsoleAppender());
                     break;
 
                 default:
                     throw new ArgumentOutOfRangeException($"Appender set to unknown value of '{appenderType}'");
             }
-
-            await Task.CompletedTask;
         }
 
         /// <summary>
@@ -256,31 +232,79 @@ namespace TelemetryManager
         /// make sense in all implementations. Also, some appenders cannot be enabled
         /// programatically. (ManagedColoredConsoleAppender)
         /// </summary>
-        public async Task DisableAppender(Appender appenderType)
+        public void DisableAppender(Appender appenderType)
         {
-            Logger _logger = (Logger)_Log.Logger;
-            _logger.RemoveAppender(appenderType.ToString());
-            await Task.CompletedTask;
+            var logger = (Logger)_Log.Logger;
+            logger.RemoveAppender(appenderType.ToString());
         }
 
         private void Dispose(bool disposing)
         {
-            if (!_isDisposed)
-            {
-                if (disposing)
-                {
-                    // dispose managed objects.
-                    _Log.Logger.Repository.Shutdown();
-                }
+            if (_isDisposed)
+                return;
 
-                _isDisposed = true;
+            if (disposing)
+            {
+                // dispose managed objects.
+                _Log.Logger.Repository.Shutdown();
             }
+
+            _isDisposed = true;
         }
 
         public void Dispose()
         {
             Dispose(true);
             GC.SuppressFinalize(this);
+        }
+
+
+        /// <summary>
+        /// Core method for logging. Insures that all logged messages meet the criteria defined by LogBase
+        /// </summary>
+        public async Task LogMessageAsync(LoggingLevel loggingLevel, string message, Exception ex, object data)
+        {
+            await Task.Run(() => LogMessage(loggingLevel, message, ex, data));
+        }
+
+        public async Task DebugAsync(string message, Exception exception = null, object data = null) =>
+            await LogMessageAsync(LoggingLevel.Debug, message, exception, data);
+
+        public async Task InfoAsync(string message, Exception exception = null, object data = null) =>
+            await LogMessageAsync(LoggingLevel.Info, message, exception, data);
+
+        public async Task WarnAsync(string message, Exception exception = null, object data = null) =>
+            await LogMessageAsync(LoggingLevel.Warn, message, exception, data);
+
+        public async Task ErrorAsync(string message, Exception exception = null, object data = null) =>
+            await LogMessageAsync(LoggingLevel.Error, message, exception, data);
+
+        public async Task FatalAsync(string message, Exception exception = null, object data = null)
+            => await LogMessageAsync(LoggingLevel.Fatal, message, exception, data);
+
+        public async Task SetLocalLoggingLevelAsync(LoggingLevel newLevel)
+        {
+            await Task.Run(() => SetLocalLoggingLevel(newLevel));
+        }
+
+        /// <summary>
+        /// Not included as part of Ilogger interface, concept of appenders might not 
+        /// make sense in all implementations. Also, some appenders cannot be enabled
+        /// programatically. (ManagedColoredConsoleAppender)
+        /// </summary>
+        public async Task EnableAppenderAsync(Appender appenderType)
+        {
+            await Task.Run(() => EnableAppender(appenderType));
+        }
+
+        /// <summary>
+        /// Not included as part of Ilogger interface, concept of appenders might not 
+        /// make sense in all implementations. Also, some appenders cannot be enabled
+        /// programatically. (ManagedColoredConsoleAppender)
+        /// </summary>
+        public async Task DisableAppenderAsync(Appender appenderType)
+        {
+            await Task.Run(() => DisableAppender(appenderType));
         }
     }
 }

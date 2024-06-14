@@ -1,3 +1,4 @@
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -31,45 +32,46 @@ namespace TelemetryManager
             _IsDisposed = false;
         }
 
-        public async Task IncrementCounter(string eventName, string[] tags)
+
+        public void IncrementCounter(string eventName, string[] tags)
         {
-            await IncrementCounter(eventName, 1, tags);
+            IncrementCounter(eventName, 1, tags);
         }
 
-        public async Task DecrementCounter(string eventName, string[] tags)
+        public void DecrementCounter(string eventName, string[] tags)
         {
-            await IncrementCounter(eventName, -1, tags);
+            IncrementCounter(eventName, -1, tags);
         }
 
-        public async Task IncrementCounter(string metricName, int count, string[] tags = null)
+        public void IncrementCounter(string metricName, int count, string[] tags = null)
         {
-            await Write(MetricType.count, metricName, tags, DateTime.UtcNow, count.ToString());
+            Write(MetricType.count, metricName, tags, count.ToString());
         }
 
-        public async Task SetGauge(string metricName, double value, string[] tags = null)
+        public void SetGauge(string metricName, double value, string[] tags = null)
         {
-            await Write(MetricType.gauge, metricName, tags, DateTime.UtcNow, value.ToString());
+            Write(MetricType.gauge, metricName, tags, value.ToString());
         }
 
-        public async Task LogDurationInMs(string metricName, double durationInMs, string[] tags = null)
+        public void LogDurationInMs(string metricName, double durationInMs, string[] tags = null)
         {
-            await Write(MetricType.rate, metricName, tags, DateTime.UtcNow, durationInMs.ToString());
+            Write(MetricType.rate, metricName, tags, durationInMs.ToString());
         }
 
-        public async Task LogDurationInMs(string metricName, TimeSpan duration, string[] tags = null)
+        public void LogDurationInMs(string metricName, TimeSpan duration, string[] tags = null)
         {
-            await Write(MetricType.rate, metricName, tags, DateTime.UtcNow, duration.TotalMilliseconds.ToString());
+            Write(MetricType.rate, metricName, tags, duration.TotalMilliseconds.ToString());
         }
 
-        public async Task LogDurationInMs(string metricName, DateTime start, DateTime end, string[] tags = null)
+        public void LogDurationInMs(string metricName, DateTime start, DateTime end, string[] tags = null)
         {
             if (end < start)
                 (start, end) = (end, start);
 
-            await Write(MetricType.rate, metricName, tags, DateTime.UtcNow, (end - start).TotalMilliseconds.ToString());
+            Write(MetricType.rate, metricName, tags, (end - start).TotalMilliseconds.ToString());
         }
 
-        public async Task LogMethodDurationInMs(string metricName, Action method, string[] tags = null)
+        public void LogMethodDurationInMs(string metricName, Action method, string[] tags = null)
         {
             var timer = Stopwatch.StartNew();
 
@@ -80,11 +82,11 @@ namespace TelemetryManager
             finally
             {
                 timer.Stop();
-                await Write(MetricType.rate, metricName, tags, DateTime.UtcNow, timer.ElapsedMilliseconds.ToString());
+                Write(MetricType.rate, metricName, tags, timer.ElapsedMilliseconds.ToString());
             }
         }
 
-        public async Task<T> LogMethodDurationInMs<T>(string metricName, Func<T> method, string[] tags = null)
+        public T LogMethodDurationInMs<T>(string metricName, Func<T> method, string[] tags = null)
         {
             var timer = Stopwatch.StartNew();
 
@@ -95,11 +97,11 @@ namespace TelemetryManager
             finally
             {
                 timer.Stop();
-                await Write(MetricType.rate, metricName, tags, DateTime.UtcNow, timer.ElapsedMilliseconds.ToString());
+                Write(MetricType.rate, metricName, tags, timer.ElapsedMilliseconds.ToString());
             }
         }
 
-        private async Task Write(MetricType metricType, string metricName, string[] customTags, DateTime eventDate, string value)
+        public void Write(MetricType metricType, string metricName, string[] customTags, string value)
         {
             if (string.IsNullOrWhiteSpace(metricName))
                 throw new ArgumentNullException(nameof(metricName));
@@ -124,7 +126,7 @@ namespace TelemetryManager
                 {
                     new string[]
                     {
-                        new DateTimeOffset(eventDate).ToUnixTimeSeconds().ToString(),
+                        DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString(),
                         value
                     }
                 }
@@ -132,27 +134,76 @@ namespace TelemetryManager
 
             RecordedMetrics.Add(metric);
             Debug.WriteLine($"(DebugMetricWriter): {metric}");
-
-            await Task.CompletedTask;
         }
 
         private void Dispose(bool disposing)
         {
-            if (!_IsDisposed)
-            {
-                if (disposing)
-                {
-                    RecordedMetrics = null;
-                }
+            if (_IsDisposed)
+                return;
 
-                _IsDisposed = true;
+            if (disposing)
+            {
+                RecordedMetrics = null;
             }
+
+            _IsDisposed = true;
         }
 
         public void Dispose()
         {
             Dispose(true);
             GC.SuppressFinalize(this);
+        }
+
+
+        public async Task IncrementCounterAsync(string metricName, string[] tags = null)
+        {
+            await Task.Run(() => IncrementCounter(metricName, tags));
+        }
+
+        public async Task DecrementCounterAsync(string eventName, string[] tags)
+        {
+            await Task.Run(() => DecrementCounter(eventName, tags));
+        }
+
+        public async Task IncrementCounterAsync(string metricName, int count, string[] tags = null)
+        {
+            await Task.Run(() => IncrementCounter(metricName, count, tags));
+        }
+
+        public async Task SetGaugeAsync(string metricName, double value, string[] tags = null)
+        {
+            await Task.Run(() => SetGauge(metricName, value, tags));
+        }
+
+        public async Task LogDurationInMsAsync(string metricName, double durationInMs, string[] tags = null)
+        {
+            await Task.Run(() => LogDurationInMs(metricName, durationInMs, tags));
+        }
+
+        public async Task LogDurationInMsAsync(string metricName, TimeSpan duration, string[] tags = null)
+        {
+            await Task.Run(() => LogDurationInMs(metricName, duration, tags));
+        }
+
+        public async Task LogDurationInMsAsync(string metricName, DateTime start, DateTime end, string[] tags = null)
+        {
+            await Task.Run(() => LogDurationInMs(metricName, start, end, tags));
+        }
+
+        public async Task LogMethodDurationInMsAsync(string metricName, Action method, string[] tags = null)
+        {
+            await Task.Run(() => LogMethodDurationInMs(metricName, method, tags));
+        }
+
+        public async Task<T> LogMethodDurationInMsAsync<T>(string metricName, Func<T> method, string[] tags = null)
+        {
+            return await Task.Run(() => LogMethodDurationInMs(metricName, method, tags));
+        }
+
+        public async Task WriteAsync(MetricType metricType, string metricName, string[] customTags, string value)
+        {
+            await Task.Run(() => Write(metricType, metricName, customTags, value));
         }
     }
 

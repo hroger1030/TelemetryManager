@@ -26,19 +26,19 @@ namespace TestApp
             try
             {
                 // Fire off a set of tests
-                await _Log.Debug("Debug");
-                await _Log.Info("Info");
-                await _Log.Warn("Warning");
+                await _Log.DebugAsync("Debug");
+                await _Log.InfoAsync("Info");
+                await _Log.WarnAsync("Warning");
 
                 for (int i = 0; i < 100; i++)
-                    await _Metrics.IncrementCounter("Metric1");
+                    await _Metrics.IncrementCounterAsync("Metric1");
 
                 throw new Exception("Sample Exception");
             }
             catch (Exception ex)
             {
-                await _Log.Error("Test Error", ex, null);
-                await _Log.Fatal("Test Fatal", ex, null);
+                await _Log.ErrorAsync("Test Error", ex, null);
+                await _Log.FatalAsync("Test Fatal", ex, null);
             }
             finally
             {

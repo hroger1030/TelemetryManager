@@ -11,12 +11,20 @@ namespace TelemetryManager
         bool IsInfoEnabled { get; }
         bool IsWarnEnabled { get; }
 
-        Task Debug(string message, Exception ex = null, object data = null);
-        Task Info(string message, Exception ex = null, object data = null);
-        Task Warn(string message, Exception ex = null, object data = null);
-        Task Error(string message, Exception ex = null, object data = null);
-        Task Fatal(string message, Exception ex = null, object data = null);
+        void LogMessage(LoggingLevel loggingLevel, string message, Exception ex, object data);
+        void Debug(string message, Exception ex = null, object data = null);
+        void Info(string message, Exception ex = null, object data = null);
+        void Warn(string message, Exception ex = null, object data = null);
+        void Error(string message, Exception ex = null, object data = null);
+        void Fatal(string message, Exception ex = null, object data = null);
+        void SetLocalLoggingLevel(LoggingLevel newLevel);
 
-        Task SetLocalLoggingLevel(LoggingLevel newLevel);
+        Task LogMessageAsync(LoggingLevel loggingLevel, string message, Exception ex, object data);
+        Task DebugAsync(string message, Exception ex = null, object data = null);
+        Task InfoAsync(string message, Exception ex = null, object data = null);
+        Task WarnAsync(string message, Exception ex = null, object data = null);
+        Task ErrorAsync(string message, Exception ex = null, object data = null);
+        Task FatalAsync(string message, Exception ex = null, object data = null);
+        Task SetLocalLoggingLevelAsync(LoggingLevel newLevel);
     }
 }

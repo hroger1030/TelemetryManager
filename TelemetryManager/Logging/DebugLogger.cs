@@ -9,6 +9,8 @@ namespace TelemetryManager
     /// </summary>
     public class DebugLogger : ILogger, IDisposable
     {
+        private const string DEFAULT_ENVIRONMENT = "dev";
+
         private readonly string _ApplicationName;
         private readonly string _Environment;
         private bool _isDisposed;
@@ -30,7 +32,7 @@ namespace TelemetryManager
         /// <param name="type">The type of the class that the logging is being done in. Use typeof(<your_class>) to pass this parameter in.</param>
         /// <param name="applicationName">A string that denotes the name of the application that you are working in.</param>
         /// <param name="environment">A string denoting the environment that you are working in. Typically this will be prod|stage|dev.</param>
-        public DebugLogger(Type type, string applicationName, string environment) : this(type.FullName, applicationName, environment) { }
+        public DebugLogger(Type type, string applicationName, string environment = DEFAULT_ENVIRONMENT) : this(type.FullName, applicationName, environment) { }
 
         /// <summary>
         /// CTOR to initialize logger. This must be called before any logging can be done.
@@ -38,7 +40,7 @@ namespace TelemetryManager
         /// <param name="type">The string that describes the module that the logging is being done in. This is an alternative to passing in the logging class type</param>
         /// <param name="applicationName">A string that denotes the name of the application that you are working in.</param>
         /// <param name="environment">A string denoting the environment that you are working in. Typically this will be prod|stage|dev.</param>
-        public DebugLogger(string type, string applicationName, string environment)
+        public DebugLogger(string type, string applicationName, string environment = DEFAULT_ENVIRONMENT)
         {
             if (string.IsNullOrWhiteSpace(type))
                 throw new ArgumentNullException(nameof(type));
@@ -55,7 +57,7 @@ namespace TelemetryManager
             _isDisposed = false;
         }
 
-        public async Task LogMessage(LoggingLevel loggingLevel, string message, Exception ex, object data)
+        public void LogMessage(LoggingLevel loggingLevel, string message, Exception ex, object data)
         {
             var payload = new DebugLoggerLog()
             {
@@ -63,31 +65,29 @@ namespace TelemetryManager
                 Environment = _Environment,
                 Error = ex,
                 Level = loggingLevel,
-                Message = data.ToString(),
+                Message = (data == null) ? string.Empty : data.ToString(),
             };
 
             LoggedMessages.Add(payload);
             System.Diagnostics.Debug.WriteLine($"{loggingLevel}:{message} {ex} {payload}");
-
-            await Task.CompletedTask;
         }
 
-        public async Task Debug(string message, Exception ex = null, object data = null)
-            => await LogMessage(LoggingLevel.Debug, message, ex, data);
+        public void Debug(string message, Exception ex = null, object data = null)
+            => LogMessage(LoggingLevel.Debug, message, ex, data);
 
-        public async Task Info(string message, Exception ex = null, object data = null)
-            => await LogMessage(LoggingLevel.Info, message, ex, data);
+        public void Info(string message, Exception ex = null, object data = null)
+            => LogMessage(LoggingLevel.Info, message, ex, data);
 
-        public async Task Warn(string message, Exception ex = null, object data = null)
-            => await LogMessage(LoggingLevel.Warn, message, ex, data);
+        public void Warn(string message, Exception ex = null, object data = null)
+            => LogMessage(LoggingLevel.Warn, message, ex, data);
 
-        public async Task Error(string message, Exception ex = null, object data = null)
-            => await LogMessage(LoggingLevel.Error, message, ex, data);
+        public void Error(string message, Exception ex = null, object data = null)
+            => LogMessage(LoggingLevel.Error, message, ex, data);
 
-        public async Task Fatal(string message, Exception ex = null, object data = null)
-            => await LogMessage(LoggingLevel.Fatal, message, ex, data);
+        public void Fatal(string message, Exception ex = null, object data = null)
+            => LogMessage(LoggingLevel.Fatal, message, ex, data);
 
-        public async Task SetLocalLoggingLevel(LoggingLevel newLevel)
+        public void SetLocalLoggingLevel(LoggingLevel newLevel)
         {
             switch (newLevel)
             {
@@ -134,27 +134,50 @@ namespace TelemetryManager
                 default:
                     throw new ArgumentOutOfRangeException($"LoggingLevel set to unknown value of '{newLevel}'");
             }
-
-            await Task.CompletedTask;
         }
 
         private void Dispose(bool disposing)
         {
-            if (!_isDisposed)
-            {
-                if (disposing)
-                {
-                    LoggedMessages = null;
-                }
+            if (_isDisposed)
+                return;
 
-                _isDisposed = true;
+            if (disposing)
+            {
+                LoggedMessages = null;
             }
+
+            _isDisposed = true;
         }
 
         public void Dispose()
         {
             Dispose(true);
             GC.SuppressFinalize(this);
+        }
+
+        public async Task LogMessageAsync(LoggingLevel loggingLevel, string message, Exception ex, object data)
+        {
+            await Task.Run(() => LogMessage(loggingLevel, message, ex, data));
+        }
+
+        public async Task DebugAsync(string message, Exception ex = null, object data = null)
+            => await LogMessageAsync(LoggingLevel.Debug, message, ex, data);
+
+        public async Task InfoAsync(string message, Exception ex = null, object data = null)
+            => await LogMessageAsync(LoggingLevel.Info, message, ex, data);
+
+        public async Task WarnAsync(string message, Exception ex = null, object data = null)
+            => await LogMessageAsync(LoggingLevel.Warn, message, ex, data);
+
+        public async Task ErrorAsync(string message, Exception ex = null, object data = null)
+            => await LogMessageAsync(LoggingLevel.Error, message, ex, data);
+
+        public async Task FatalAsync(string message, Exception ex = null, object data = null)
+            => await LogMessageAsync(LoggingLevel.Fatal, message, ex, data);
+
+        public async Task SetLocalLoggingLevelAsync(LoggingLevel newLevel)
+        {
+            await Task.Run(() => SetLocalLoggingLevel(newLevel));
         }
     }
 
