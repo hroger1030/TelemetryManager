@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 
 namespace TelemetryManager
 {
-    public class Log4NetLogger : ILogger, IDisposable
+    public class Log4NetLogger : ILogWriter, IDisposable
     {
         private const string LOG4NET_CONFIG_FILENAME = "log.config";
 

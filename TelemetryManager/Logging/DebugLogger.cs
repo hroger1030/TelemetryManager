@@ -7,7 +7,7 @@ namespace TelemetryManager
     /// <summary>
     /// Debugger logger that will write all errors directly to debug console.
     /// </summary>
-    public class DebugLogger : ILogger, IDisposable
+    public class DebugLogger : ILogWriter, IDisposable
     {
         private const string DEFAULT_ENVIRONMENT = "dev";
 

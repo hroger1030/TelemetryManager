@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 
 namespace TelemetryManager
 {
-    public interface ILogger : IDisposable
+    public interface ILogWriter : IDisposable
     {
         bool IsDebugEnabled { get; }
         bool IsErrorEnabled { get; }
