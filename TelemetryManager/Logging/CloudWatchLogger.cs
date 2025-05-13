@@ -1,24 +1,18 @@
 using System;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace TelemetryManager
 {
     /// <summary>
-    /// Debugger logger that will write all errors directly to debug console.
+    /// CloudWatch logger that will write all errors directly to console.
     /// </summary>
-    public class DebugLogger : ILogWriter, IDisposable
+    public class CloudWatchLogger : ILogWriter, IDisposable
     {
         private const string DEFAULT_ENVIRONMENT = "dev";
 
         private readonly string _ApplicationName;
         private readonly string _Environment;
         private bool _isDisposed;
-
-        /// <summary>
-        /// Property created to store any logged messages. Used by unit tests to view was was reported.
-        /// </summary>
-        public List<LogMessage> LoggedMessages { get; private set; } = new();
 
         public bool IsDebugEnabled { get; set; } = true;
         public bool IsErrorEnabled { get; set; } = true;
@@ -32,7 +26,7 @@ namespace TelemetryManager
         /// <param name="type">The type of the class that the logging is being done in. Use typeof(<your_class>) to pass this parameter in.</param>
         /// <param name="applicationName">A string that denotes the name of the application that you are working in.</param>
         /// <param name="environment">A string denoting the environment that you are working in. Typically this will be prod|stage|dev.</param>
-        public DebugLogger(Type type, string applicationName, string environment = DEFAULT_ENVIRONMENT) : this(type.FullName, applicationName, environment) { }
+        public CloudWatchLogger(Type type, string applicationName, string environment = DEFAULT_ENVIRONMENT) : this(type.FullName, applicationName, environment) { }
 
         /// <summary>
         /// CTOR to initialize logger. This must be called before any logging can be done.
@@ -40,7 +34,7 @@ namespace TelemetryManager
         /// <param name="type">The string that describes the module that the logging is being done in. This is an alternative to passing in the logging class type</param>
         /// <param name="applicationName">A string that denotes the name of the application that you are working in.</param>
         /// <param name="environment">A string denoting the environment that you are working in. Typically this will be prod|stage|dev.</param>
-        public DebugLogger(string type, string applicationName, string environment = DEFAULT_ENVIRONMENT)
+        public CloudWatchLogger(string type, string applicationName, string environment = DEFAULT_ENVIRONMENT)
         {
             if (string.IsNullOrWhiteSpace(type))
                 throw new ArgumentNullException(nameof(type));
@@ -68,8 +62,7 @@ namespace TelemetryManager
                 Message = (data == null) ? string.Empty : data.ToString(),
             };
 
-            LoggedMessages.Add(payload);
-            System.Diagnostics.Debug.WriteLine($"{loggingLevel}:{message} {ex} {payload}");
+            Console.WriteLine($"{loggingLevel}:{message} {ex} {payload}");
         }
 
         public void Debug(string message, Exception ex = null, object data = null)
@@ -141,10 +134,7 @@ namespace TelemetryManager
             if (_isDisposed)
                 return;
 
-            if (disposing)
-            {
-                LoggedMessages = null;
-            }
+            if (disposing) { }
 
             _isDisposed = true;
         }
