@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace TelemetryManager
@@ -53,17 +54,27 @@ namespace TelemetryManager
 
         public void LogMessage(LoggingLevel loggingLevel, string message, Exception ex, object data)
         {
-            var payload = new LogMessage()
+            var logData = new Dictionary<string, object>
             {
-                ApplicationName = _ApplicationName,
-                Environment = _Environment,
-                Error = ex,
-                Level = loggingLevel,
-                Message = (data == null) ? string.Empty : data.ToString(),
+                ["ApplicationName"] = _ApplicationName,
+                ["Environment"] = _Environment,
+                ["Level"] = loggingLevel.ToString(),
+                ["Message"] = message,
+                ["Data"] = data ?? string.Empty,
+                ["ExceptionType"] = ex?.GetType().FullName,
+                ["ExceptionMessage"] = ex?.Message,
+                ["StackTrace"] = ex?.StackTrace
             };
 
-            Console.WriteLine($"{loggingLevel}:{message} {ex} {payload}");
-        }
+            if (ex?.Data != null)
+            {
+                foreach (var key in ex.Data.Keys)
+                    logData[$"ExceptionData-{key}"] = ex.Data[key];
+            }
+
+            foreach (var kvp in logData)
+                Console.WriteLine($"{kvp.Key}: {kvp.Value}");
+            }
 
         public void Debug(string message, Exception ex = null, object data = null)
             => LogMessage(LoggingLevel.Debug, message, ex, data);
