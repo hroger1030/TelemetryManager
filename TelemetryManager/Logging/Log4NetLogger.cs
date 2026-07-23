@@ -83,7 +83,7 @@ namespace TelemetryManager
                             {
                                 // could not find the file here, looks to see if we are dealing with a web app
                                 var location = Assembly.GetEntryAssembly().Location;
-                                fullPath = Path.GetDirectoryName(location) + "\\" + LOG4NET_CONFIG_FILENAME;
+                                fullPath = Path.Combine(Path.GetDirectoryName(location), LOG4NET_CONFIG_FILENAME);
 
                                 if (!File.Exists(fullPath))
                                 {
