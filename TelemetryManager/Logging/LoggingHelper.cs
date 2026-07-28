@@ -6,8 +6,7 @@ namespace TelemetryManager
     {
         public static LoggingLevel LoggingLevelStringMapper(string input)
         {
-            if (string.IsNullOrWhiteSpace(input))
-                throw new ArgumentNullException(nameof(input));
+            ArgumentException.ThrowIfNullOrWhiteSpace(input);
 
             switch (input.ToLower().Trim())
             {

@@ -32,17 +32,10 @@ namespace TelemetryManager
         /// <param name="environment">A string denoting the environment that you are working in. Typically this will be prod|stage|dev.</param>
         public StatsdMetrics(string urlEndpoint, string apiKey, string applicationName, string environment)
         {
-            if (string.IsNullOrWhiteSpace(urlEndpoint))
-                throw new ArgumentNullException(nameof(urlEndpoint));
-
-            if (string.IsNullOrWhiteSpace(apiKey))
-                throw new ArgumentNullException(nameof(apiKey));
-
-            if (string.IsNullOrWhiteSpace(applicationName))
-                throw new ArgumentNullException(nameof(applicationName));
-
-            if (string.IsNullOrWhiteSpace(environment))
-                throw new ArgumentNullException(nameof(environment));
+            ArgumentException.ThrowIfNullOrEmpty(urlEndpoint);
+            ArgumentException.ThrowIfNullOrEmpty(apiKey);
+            ArgumentException.ThrowIfNullOrEmpty(applicationName);
+            ArgumentException.ThrowIfNullOrEmpty(environment);
 
             _HttpClient = new HttpClient
             {
@@ -51,9 +44,9 @@ namespace TelemetryManager
 
             _ApplicationName = applicationName.Replace(" ", string.Empty).ToLower();
             _Environment = environment.Replace(" ", string.Empty).ToLower();
-            _UrlEndpoint = $"{_UrlEndpoint}?api_key={_ApiKey}";
-            _MetricTagCache = new[] { $"env:{_Environment}", $"source:{_ApplicationName}" };
             _ApiKey = apiKey;
+            _UrlEndpoint = $"{urlEndpoint}?api_key={_ApiKey}";
+            _MetricTagCache = new[] { $"env:{_Environment}", $"source:{_ApplicationName}" };
             _IsDisposed = false;
         }
 
@@ -140,11 +133,8 @@ namespace TelemetryManager
 
         public void Write(MetricType metricType, string metricName, string[] customTags, string value)
         {
-            if (string.IsNullOrWhiteSpace(metricName))
-                throw new ArgumentNullException(nameof(metricName));
-
-            if (string.IsNullOrWhiteSpace(value))
-                throw new ArgumentNullException(nameof(value));
+            ArgumentException.ThrowIfNullOrEmpty(metricName);
+            ArgumentException.ThrowIfNullOrEmpty(value);
 
             var tagsList = new List<string>(_MetricTagCache);
 

@@ -37,14 +37,9 @@ namespace TelemetryManager
         /// <param name="environment">A string denoting the environment that you are working in. Typically this will be prod|stage|dev.</param>
         public CloudWatchLogger(string type, string applicationName, string environment = DEFAULT_ENVIRONMENT)
         {
-            if (string.IsNullOrWhiteSpace(type))
-                throw new ArgumentNullException(nameof(type));
-
-            if (string.IsNullOrWhiteSpace(applicationName))
-                throw new ArgumentNullException(nameof(applicationName));
-
-            if (string.IsNullOrWhiteSpace(environment))
-                throw new ArgumentNullException(nameof(environment));
+            ArgumentException.ThrowIfNullOrWhiteSpace(type);
+            ArgumentException.ThrowIfNullOrWhiteSpace(applicationName);
+            ArgumentException.ThrowIfNullOrWhiteSpace(environment);
 
             // for the sake of consistency, we are using lower case names
             _ApplicationName = applicationName.ToLower();
@@ -60,11 +55,13 @@ namespace TelemetryManager
                 ["Environment"] = _Environment,
                 ["Level"] = loggingLevel.ToString(),
                 ["Message"] = message,
-                ["Data"] = data ?? string.Empty,
                 ["ExceptionType"] = ex?.GetType().FullName,
                 ["ExceptionMessage"] = ex?.Message,
                 ["StackTrace"] = ex?.StackTrace
             };
+
+            if (data != null)
+                logData["Data"] = data;
 
             if (ex?.Data != null)
             {
@@ -74,7 +71,7 @@ namespace TelemetryManager
 
             foreach (var kvp in logData)
                 Console.WriteLine($"{kvp.Key}: {kvp.Value}");
-            }
+        }
 
         public void Debug(string message, Exception ex = null, object data = null)
             => LogMessage(LoggingLevel.Debug, message, ex, data);

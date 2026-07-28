@@ -42,14 +42,9 @@ namespace TelemetryManager
         /// <param name="environment">A string denoting the environment that you are working in. Typically this will be prod|stage|dev.</param>
         public DebugLogger(string type, string applicationName, string environment = DEFAULT_ENVIRONMENT)
         {
-            if (string.IsNullOrWhiteSpace(type))
-                throw new ArgumentNullException(nameof(type));
-
-            if (string.IsNullOrWhiteSpace(applicationName))
-                throw new ArgumentNullException(nameof(applicationName));
-
-            if (string.IsNullOrWhiteSpace(environment))
-                throw new ArgumentNullException(nameof(environment));
+            ArgumentException.ThrowIfNullOrWhiteSpace(type);
+            ArgumentException.ThrowIfNullOrWhiteSpace(applicationName);
+            ArgumentException.ThrowIfNullOrWhiteSpace(environment);
 
             // for the sake of consistency, we are using lower case names
             _ApplicationName = applicationName.ToLower();

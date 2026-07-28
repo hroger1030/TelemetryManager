@@ -1,11 +1,11 @@
 using log4net;
-using log4net.Appender;
 using log4net.Config;
 using log4net.Core;
 using log4net.loggly;
 using log4net.Repository.Hierarchy;
 using System;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 
@@ -35,9 +35,10 @@ namespace TelemetryManager
         /// <param name="type">The type of the class that the logging is being done in. Use typeof(<your_class>) to pass this parameter in.</param>
         /// <param name="applicationName">A string that denotes the name of the application that you are working in.</param>
         /// <param name="environment">A string denoting the environment that you are working in. Typically this will be prod|stage|dev.</param>
+        /// <param name="logglyApiKey">The Loggly input key, supplied at runtime so it never has to live in the checked-in log.config. Ignored if the config has no LogglyAppender.</param>
         /// <param name="UseConfigurationSettings">This flag tells log4net were to look to find its appender configuration settings. This will
         /// default to false unless you specify otherwise. We are generally going to want to keep these settings in configuration files over external files.</param>
-        public Log4NetLogger(Type type, string applicationName, string environment, bool UseConfigurationSettings = false) : this(type.FullName, applicationName, environment, UseConfigurationSettings) { }
+        public Log4NetLogger(Type type, string applicationName, string environment, string logglyApiKey = null, bool UseConfigurationSettings = false) : this(type.FullName, applicationName, environment, logglyApiKey, UseConfigurationSettings) { }
 
         /// <summary>
         /// CTOR to initialize logger. This must be called before any logging can be done.
@@ -45,17 +46,13 @@ namespace TelemetryManager
         /// <param name="type">The string that describes the module that the logging is being done in. This is an alternative to passing in the logging class type</param>
         /// <param name="applicationName">A string that denotes the name of the application that you are working in.</param>
         /// <param name="environment">A string denoting the environment that you are working in. Typically this will be prod|stage|dev.</param>
+        /// <param name="logglyApiKey">The Loggly input key, supplied at runtime so it never has to live in the checked-in log.config. Ignored if the config has no LogglyAppender.</param>
         /// <param name="UseConfigurationSettings">This flag tells log4net to use app.config/web.config settings instead of the defaults located in this projects log.config if set to true you need to add the log4net appenders to your app.config/web.config</param>
-        public Log4NetLogger(string type, string applicationName, string environment, bool UseConfigurationSettings = false)
+        public Log4NetLogger(string type, string applicationName, string environment, string logglyApiKey = null, bool UseConfigurationSettings = false)
         {
-            if (string.IsNullOrWhiteSpace(type))
-                throw new ArgumentNullException(nameof(type));
-
-            if (string.IsNullOrWhiteSpace(applicationName))
-                throw new ArgumentNullException(nameof(applicationName));
-
-            if (string.IsNullOrWhiteSpace(environment))
-                throw new ArgumentNullException(nameof(environment));
+            ArgumentException.ThrowIfNullOrWhiteSpace(type);
+            ArgumentException.ThrowIfNullOrWhiteSpace(applicationName);
+            ArgumentException.ThrowIfNullOrWhiteSpace(environment);
 
             // We want to be able to create multiple loggers for local use, but we only need to set a
             // single watch on the configuration file name. Using singleton lock model to insure initialize.
@@ -68,6 +65,9 @@ namespace TelemetryManager
                     if (!_Configured)
                     {
                         var logRepository = LogManager.GetRepository(Assembly.GetEntryAssembly());
+
+                        if (logRepository == null)
+                            throw new Exception("GetEntryAssembly() returned null, halting");
 
                         if (UseConfigurationSettings)
                         {
@@ -82,8 +82,12 @@ namespace TelemetryManager
                             if (!File.Exists(fullPath))
                             {
                                 // could not find the file here, looks to see if we are dealing with a web app
-                                var location = Assembly.GetEntryAssembly().Location;
-                                fullPath = Path.Combine(Path.GetDirectoryName(location), LOG4NET_CONFIG_FILENAME);
+                                var assembleyPath = Assembly.GetEntryAssembly().Location;
+
+                                if (assembleyPath == null)
+                                    throw new Exception("GetEntryAssembly() returned null for path {}");
+
+                                fullPath = Path.Combine(Path.GetDirectoryName(assembleyPath), LOG4NET_CONFIG_FILENAME);
 
                                 if (!File.Exists(fullPath))
                                 {
@@ -102,15 +106,42 @@ namespace TelemetryManager
                             XmlConfigurator.ConfigureAndWatch(logRepository, fileInfo);
                         }
 
+                        if (!string.IsNullOrWhiteSpace(logglyApiKey))
+                        {
+                            var hierarchy = (Hierarchy)logRepository;
+                            var staleAppender = hierarchy.Root.Appenders.OfType<LogglyAppender>().FirstOrDefault();
+
+                            // LogglyAppender's async send buffer is only ever built on its first
+                            // ActivateOptions() call, which log4net already triggered while loading
+                            // log.config (using whatever placeholder token was in the file). Setting
+                            // CustomerToken and re-activating afterward does not replace that buffer,
+                            // so the real key would silently never be used. Replace the appender
+                            // outright so the real key is present for its one and only activation.
+                            if (staleAppender != null)
+                            {
+                                hierarchy.Root.RemoveAppender(staleAppender);
+
+                                var logglyAppender = new LogglyAppender
+                                {
+                                    Name = staleAppender.Name,
+                                    Threshold = staleAppender.Threshold,
+                                    RootUrl = staleAppender.RootUrl,
+                                    Tag = staleAppender.Tag,
+                                    CustomerToken = logglyApiKey,
+                                };
+
+                                logglyAppender.ActivateOptions();
+                                hierarchy.Root.AddAppender(logglyAppender);
+                            }
+                        }
+
                         _Configured = true;
                     }
                 }
             }
 
-            // for the sake of consistency, we are using lower case names
             _ApplicationName = applicationName.ToLower();
             _Environment = environment.ToLower();
-
             _isDisposed = false;
             _Log = LogManager.GetLogger(Assembly.GetCallingAssembly(), type.ToLower());
 
@@ -134,28 +165,23 @@ namespace TelemetryManager
             switch (loggingLevel)
             {
                 case LoggingLevel.Debug:
-                    if (_Log.IsDebugEnabled)
-                        _Log.Debug(payload, ex);
+                    _Log.Debug(payload, ex);
                     break;
 
                 case LoggingLevel.Info:
-                    if (_Log.IsInfoEnabled)
-                        _Log.Info(payload, ex);
+                    _Log.Info(payload, ex);
                     break;
 
                 case LoggingLevel.Warn:
-                    if (_Log.IsWarnEnabled)
-                        _Log.Warn(payload, ex);
+                    _Log.Warn(payload, ex);
                     break;
 
                 case LoggingLevel.Error:
-                    if (_Log.IsErrorEnabled)
-                        _Log.Error(payload, ex);
+                    _Log.Error(payload, ex);
                     break;
 
                 case LoggingLevel.Fatal:
-                    if (_Log.IsFatalEnabled)
-                        _Log.Fatal(payload, ex);
+                    _Log.Fatal(payload, ex);
                     break;
 
                 default:
@@ -202,6 +228,10 @@ namespace TelemetryManager
         /// </summary>
         public void EnableAppender(Appender appenderType)
         {
+            // TODO: needs more work here to be ready to use
+            throw new NotImplementedException();
+
+            /*
             var logger = (Logger)_Log.Logger;
 
             switch (appenderType)
@@ -225,6 +255,7 @@ namespace TelemetryManager
                 default:
                     throw new ArgumentOutOfRangeException($"Appender set to unknown value of '{appenderType}'");
             }
+            */
         }
 
         /// <summary>
@@ -234,8 +265,13 @@ namespace TelemetryManager
         /// </summary>
         public void DisableAppender(Appender appenderType)
         {
+            // TODO: needs more work here to be ready to use
+            throw new NotImplementedException();
+
+            /*
             var logger = (Logger)_Log.Logger;
             logger.RemoveAppender(appenderType.ToString());
+            */
         }
 
         private void Dispose(bool disposing)

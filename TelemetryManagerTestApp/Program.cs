@@ -10,8 +10,9 @@ namespace TestApp
     {
         public static readonly string ApplicationName = ConfigurationManager.AppSettings["ApplicationName"];
         public static readonly string AppEnvironment = ConfigurationManager.AppSettings["Environment"];
+        public static readonly string LogglyApiKey = ConfigurationManager.AppSettings["LogglyApiKey"];
 
-        private static ILogger _Log;
+        private static ILogWriter _Log;
         private static IMetrics _Metrics;
 
         public static async Task Main()
@@ -20,15 +21,15 @@ namespace TestApp
             var sw = Stopwatch.StartNew();
 
             // new up a logger instance..
-            _Log = new Log4NetLogger(typeof(Program), ApplicationName, AppEnvironment);
+            _Log = new Log4NetLogger(typeof(Program), ApplicationName, AppEnvironment, LogglyApiKey);
             _Metrics = new DebugMetrics(ApplicationName, AppEnvironment);
 
             try
             {
                 // Fire off a set of tests
-                await _Log.DebugAsync("Debug");
-                await _Log.InfoAsync("Info");
-                await _Log.WarnAsync("Warning");
+                _Log.Debug("Debug");
+                _Log.Info("Info");
+                _Log.Warn("Warning");
 
                 for (int i = 0; i < 100; i++)
                     await _Metrics.IncrementCounterAsync("Metric1");
@@ -37,8 +38,8 @@ namespace TestApp
             }
             catch (Exception ex)
             {
-                await _Log.ErrorAsync("Test Error", ex, null);
-                await _Log.FatalAsync("Test Fatal", ex, null);
+                _Log.Error("Test Error", ex, null);
+                _Log.Fatal("Test Fatal", ex, null);
             }
             finally
             {
