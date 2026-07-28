@@ -32,7 +32,7 @@ namespace TestApp
                 _Log.Warn("Warning");
 
                 for (int i = 0; i < 100; i++)
-                    await _Metrics.IncrementCounterAsync("Metric1");
+                    _Metrics.IncrementCounter("Metric1");
 
                 throw new Exception("Sample Exception");
             }

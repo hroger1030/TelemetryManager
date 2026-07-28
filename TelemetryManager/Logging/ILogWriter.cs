@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Threading.Tasks;
 
 namespace TelemetryManager
 {
@@ -18,13 +17,5 @@ namespace TelemetryManager
         void Error(string message, Exception ex = null, object data = null);
         void Fatal(string message, Exception ex = null, object data = null);
         void SetLocalLoggingLevel(LoggingLevel newLevel);
-
-        Task LogMessageAsync(LoggingLevel loggingLevel, string message, Exception ex, object data);
-        Task DebugAsync(string message, Exception ex = null, object data = null);
-        Task InfoAsync(string message, Exception ex = null, object data = null);
-        Task WarnAsync(string message, Exception ex = null, object data = null);
-        Task ErrorAsync(string message, Exception ex = null, object data = null);
-        Task FatalAsync(string message, Exception ex = null, object data = null);
-        Task SetLocalLoggingLevelAsync(LoggingLevel newLevel);
     }
 }

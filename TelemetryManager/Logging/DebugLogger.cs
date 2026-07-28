@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Threading.Tasks;
 
 namespace TelemetryManager
 {
@@ -148,31 +147,6 @@ namespace TelemetryManager
         {
             Dispose(true);
             GC.SuppressFinalize(this);
-        }
-
-        public async Task LogMessageAsync(LoggingLevel loggingLevel, string message, Exception ex, object data)
-        {
-            await Task.Run(() => LogMessage(loggingLevel, message, ex, data));
-        }
-
-        public async Task DebugAsync(string message, Exception ex = null, object data = null)
-            => await LogMessageAsync(LoggingLevel.Debug, message, ex, data);
-
-        public async Task InfoAsync(string message, Exception ex = null, object data = null)
-            => await LogMessageAsync(LoggingLevel.Info, message, ex, data);
-
-        public async Task WarnAsync(string message, Exception ex = null, object data = null)
-            => await LogMessageAsync(LoggingLevel.Warn, message, ex, data);
-
-        public async Task ErrorAsync(string message, Exception ex = null, object data = null)
-            => await LogMessageAsync(LoggingLevel.Error, message, ex, data);
-
-        public async Task FatalAsync(string message, Exception ex = null, object data = null)
-            => await LogMessageAsync(LoggingLevel.Fatal, message, ex, data);
-
-        public async Task SetLocalLoggingLevelAsync(LoggingLevel newLevel)
-        {
-            await Task.Run(() => SetLocalLoggingLevel(newLevel));
         }
     }
 }

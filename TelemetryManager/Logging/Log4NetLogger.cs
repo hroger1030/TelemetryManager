@@ -151,7 +151,6 @@ namespace TelemetryManager
                 throw new Exception("None of the debug levels are enabled, you probably need to check that the logger configuration has been properly loaded");
         }
 
-
         public void LogMessage(LoggingLevel loggingLevel, string message, Exception ex, object data)
         {
             var payload = new
@@ -292,55 +291,6 @@ namespace TelemetryManager
         {
             Dispose(true);
             GC.SuppressFinalize(this);
-        }
-
-
-        /// <summary>
-        /// Core method for logging. Insures that all logged messages meet the criteria defined by LogBase
-        /// </summary>
-        public async Task LogMessageAsync(LoggingLevel loggingLevel, string message, Exception ex, object data)
-        {
-            await Task.Run(() => LogMessage(loggingLevel, message, ex, data));
-        }
-
-        public async Task DebugAsync(string message, Exception exception = null, object data = null) =>
-            await LogMessageAsync(LoggingLevel.Debug, message, exception, data);
-
-        public async Task InfoAsync(string message, Exception exception = null, object data = null) =>
-            await LogMessageAsync(LoggingLevel.Info, message, exception, data);
-
-        public async Task WarnAsync(string message, Exception exception = null, object data = null) =>
-            await LogMessageAsync(LoggingLevel.Warn, message, exception, data);
-
-        public async Task ErrorAsync(string message, Exception exception = null, object data = null) =>
-            await LogMessageAsync(LoggingLevel.Error, message, exception, data);
-
-        public async Task FatalAsync(string message, Exception exception = null, object data = null)
-            => await LogMessageAsync(LoggingLevel.Fatal, message, exception, data);
-
-        public async Task SetLocalLoggingLevelAsync(LoggingLevel newLevel)
-        {
-            await Task.Run(() => SetLocalLoggingLevel(newLevel));
-        }
-
-        /// <summary>
-        /// Not included as part of Ilogger interface, concept of appenders might not 
-        /// make sense in all implementations. Also, some appenders cannot be enabled
-        /// programatically. (ManagedColoredConsoleAppender)
-        /// </summary>
-        public async Task EnableAppenderAsync(Appender appenderType)
-        {
-            await Task.Run(() => EnableAppender(appenderType));
-        }
-
-        /// <summary>
-        /// Not included as part of Ilogger interface, concept of appenders might not 
-        /// make sense in all implementations. Also, some appenders cannot be enabled
-        /// programatically. (ManagedColoredConsoleAppender)
-        /// </summary>
-        public async Task DisableAppenderAsync(Appender appenderType)
-        {
-            await Task.Run(() => DisableAppender(appenderType));
         }
     }
 }

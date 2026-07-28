@@ -50,7 +50,6 @@ namespace TelemetryManager
             _IsDisposed = false;
         }
 
-
         public void IncrementCounter(string metricName, string[] tags = null)
         {
             IncrementCounter(metricName, 1, tags);
@@ -222,92 +221,6 @@ namespace TelemetryManager
         {
             Dispose(true);
             GC.SuppressFinalize(this);
-        }
-
-
-        public async Task IncrementCounterAsync(string metricName, string[] tags = null)
-        {
-            await IncrementCounterAsync(metricName, 1, tags);
-        }
-
-        public async Task DecrementCounterAsync(string metricName, string[] tags = null)
-        {
-            await IncrementCounterAsync(metricName, -1, tags);
-        }
-
-        public async Task IncrementCounterAsync(string metricName, int count, string[] tags = null)
-        {
-            await WriteAsync(MetricType.count, metricName, tags, count.ToString());
-        }
-
-        /// <summary>
-        /// Sets a gauge to specified value
-        /// </summary>
-        public async Task SetGaugeAsync(string metricName, double value, string[] tags = null)
-        {
-            await WriteAsync(MetricType.gauge, metricName, tags, value.ToString());
-        }
-
-        /// <summary>
-        /// Logs a time to the server in a dimensionless format.
-        /// </summary>
-        public async Task LogDurationInMsAsync(string metricName, double duration, string[] tags = null)
-        {
-            await WriteAsync(MetricType.rate, metricName, tags, duration.ToString());
-        }
-
-        /// <summary>
-        /// Logs a time to the server in millisecond format.
-        /// </summary>
-        public async Task LogDurationInMsAsync(string metricName, TimeSpan duration, string[] tags = null)
-        {
-            await WriteAsync(MetricType.rate, metricName, tags, duration.TotalMilliseconds.ToString());
-        }
-
-        /// <summary>
-        /// Logs a time to the server in millisecond format.
-        /// </summary>
-        public async Task LogDurationInMsAsync(string metricName, DateTime start, DateTime end, string[] tags = null)
-        {
-            if (end < start)
-                (start, end) = (end, start);
-
-            await WriteAsync(MetricType.rate, metricName, tags, (end - start).TotalMilliseconds.ToString());
-        }
-
-        public async Task<T> LogMethodDurationInMsAsync<T>(string metricName, Func<T> method, string[] tags = null)
-        {
-            var sw = Stopwatch.StartNew();
-
-            try
-            {
-                return method();
-            }
-            finally
-            {
-                sw.Stop();
-                await WriteAsync(MetricType.rate, metricName, tags, sw.ElapsedMilliseconds.ToString());
-            }
-        }
-
-        public async Task LogMethodDurationInMsAsync(string metricName, Action method, string[] tags = null)
-        {
-            var sw = Stopwatch.StartNew();
-
-            try
-            {
-                method();
-            }
-            finally
-            {
-                sw.Stop();
-                await WriteAsync(MetricType.rate, metricName, tags, sw.ElapsedMilliseconds.ToString());
-            }
-        }
-
-        public async Task WriteAsync(MetricType metricType, string metricName, string[] customTags, string value)
-        {
-            await Task.Run(() => Write(metricType, metricName, customTags, value));
         }
     }
 }

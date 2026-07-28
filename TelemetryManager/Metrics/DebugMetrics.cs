@@ -154,57 +154,6 @@ namespace TelemetryManager
             Dispose(true);
             GC.SuppressFinalize(this);
         }
-
-
-        public async Task IncrementCounterAsync(string metricName, string[] tags = null)
-        {
-            await Task.Run(() => IncrementCounter(metricName, tags));
-        }
-
-        public async Task DecrementCounterAsync(string eventName, string[] tags)
-        {
-            await Task.Run(() => DecrementCounter(eventName, tags));
-        }
-
-        public async Task IncrementCounterAsync(string metricName, int count, string[] tags = null)
-        {
-            await Task.Run(() => IncrementCounter(metricName, count, tags));
-        }
-
-        public async Task SetGaugeAsync(string metricName, double value, string[] tags = null)
-        {
-            await Task.Run(() => SetGauge(metricName, value, tags));
-        }
-
-        public async Task LogDurationInMsAsync(string metricName, double durationInMs, string[] tags = null)
-        {
-            await Task.Run(() => LogDurationInMs(metricName, durationInMs, tags));
-        }
-
-        public async Task LogDurationInMsAsync(string metricName, TimeSpan duration, string[] tags = null)
-        {
-            await Task.Run(() => LogDurationInMs(metricName, duration, tags));
-        }
-
-        public async Task LogDurationInMsAsync(string metricName, DateTime start, DateTime end, string[] tags = null)
-        {
-            await Task.Run(() => LogDurationInMs(metricName, start, end, tags));
-        }
-
-        public async Task LogMethodDurationInMsAsync(string metricName, Action method, string[] tags = null)
-        {
-            await Task.Run(() => LogMethodDurationInMs(metricName, method, tags));
-        }
-
-        public async Task<T> LogMethodDurationInMsAsync<T>(string metricName, Func<T> method, string[] tags = null)
-        {
-            return await Task.Run(() => LogMethodDurationInMs(metricName, method, tags));
-        }
-
-        public async Task WriteAsync(MetricType metricType, string metricName, string[] customTags, string value)
-        {
-            await Task.Run(() => Write(metricType, metricName, customTags, value));
-        }
     }
 
     public class MetricData
