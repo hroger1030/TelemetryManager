@@ -97,6 +97,8 @@ Both interfaces expose an `*Async` counterpart for every method (`InfoAsync`, `I
 
 ### `ILogWriter`
 
+This is the generic interface to all the logging objects. 
+
 ```csharp
 bool IsDebugEnabled { get; }
 bool IsErrorEnabled { get; }
@@ -112,8 +114,6 @@ void Fatal(string message, Exception ex = null, object data = null);
 
 void SetLocalLoggingLevel(LoggingLevel newLevel);
 ```
-
-Every method above has an `Async` twin (`DebugAsync`, `SetLocalLoggingLevelAsync`, …). `LoggingLevel` is `Debug | Info | Warn | Error | Fatal`.
 
 ### Implementations
 
@@ -153,6 +153,8 @@ If a `LogglyAppender` is present in the loaded config, `Log4NetLogger` sets its 
 
 ### `IMetrics`
 
+This is the generic interface to all the metric objects. 
+
 ```csharp
 void IncrementCounter(string metricName, string[] tags = null);
 void IncrementCounter(string metricName, int count, string[] tags = null);
@@ -166,27 +168,12 @@ T LogMethodDurationInMs<T>(string metricName, Func<T> method, string[] tags = nu
 void Write(MetricType metricType, string metricName, string[] customTags, string value);
 ```
 
-Again, every method has an `Async` twin. `MetricType` is `gauge | rate | count`.
-
 ### Implementations
 
 | Class | Where it writes | Notes |
 |---|---|---|
 | `StatsdMetrics` | HTTP POST of a statsd-style JSON payload to a configured URL | Constructor takes `(urlEndpoint, apiKey, applicationName, environment)`; every call tags the payload with `env:<environment>` and `source:<applicationName>` |
 | `DebugMetrics` | `System.Diagnostics.Debug` + an in-memory `RecordedMetrics` list | Intended for unit tests — inspect `RecordedMetrics` to assert on what was recorded |
-
-## Configuration keys
-
-`TelemetryConfig` centralizes the names of the config keys consuming applications are expected to use for metrics setup:
-
-```csharp
-TelemetryConfig.API_URL     // "Telemetry.Metrics.ApiUrl"
-TelemetryConfig.API_KEY     // "Telemetry.Metrics.ApiKey"
-TelemetryConfig.APP_NAME    // "Telemetry.ApplicationName"
-TelemetryConfig.ENVIRONMENT // "Environment"
-```
-
-`TelemetryConfig.DummyCall()` is a deliberately-unused, always-throwing method whose only purpose is to force MSBuild to include the `log4net-loggly` assembly in the library's build output. Never call it.
 
 ## Running the test app
 
@@ -196,7 +183,7 @@ TelemetryConfig.ENVIRONMENT // "Environment"
 <appSettings>
   <add key="ApplicationName" value="TelemetryTestApp"/>
   <add key="Environment" value="dev"/>
-  <add key="LogglyInputKey" value=""/>
+  <add key="LogglyApiKey" value=""/>
 </appSettings>
 ```
 
@@ -211,3 +198,7 @@ dotnet run --project TelemetryManagerTestApp
 I wanted to use the moster liberal license available. You can do anything you want with this code, except close source it and remove the license.
 
 MIT — see [LICENSE](LICENSE).
+
+## Final Thoughts
+
+"When in doubt, check the logs..."
